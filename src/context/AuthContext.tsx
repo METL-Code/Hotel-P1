@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         message.includes('SQL Server') ||
         message.includes('Error interno') ||
         message.includes('Failed to fetch') ||
+        message.includes('Respuesta invalida') ||
         message.includes('Error en el backend');
 
       if (shouldUseLocalFallback) {

@@ -1,6 +1,13 @@
 const parseResponse = async <T>(response: Response): Promise<T> => {
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  let data: unknown = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error('Respuesta invalida del backend');
+  }
+
   if (!response.ok) {
     throw new Error((data as { error?: string }).error || 'Error en el backend');
   }
