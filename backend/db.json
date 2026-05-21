@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "nombres": "Administrador",
+      "apellidos": "Principal",
+      "username": "admin",
+      "email": "admin@hotel.com",
+      "password": "admin123",
+      "role": "admin",
+      "status": "Activo"
+    },
+    {
+      "id": 2,
+      "nombres": "Usuario",
+      "apellidos": "Operativo",
+      "username": "usuario",
+      "email": "usuario@hotel.com",
+      "password": "trabajador123",
+      "role": "trabajador",
+      "status": "Activo"
+    }
+  ]
+}
