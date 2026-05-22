@@ -1,8 +1,11 @@
+// Layout principal del panel administrador.
+// Se ve en todas las rutas /admin/*: barra lateral, usuario actual, navegacion y boton de cerrar sesion.
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './AdminLayout.css';
 
+// Menu lateral disponible para administradores.
 const menuItems = [
   { to: 'dashboard', label: 'Dashboard', icon: '📊' },
   { to: 'habitaciones', label: 'Habitaciones', icon: '🏨' },
@@ -13,10 +16,13 @@ const menuItems = [
   { to: 'configuracion', label: 'Configuracion', icon: '⚙️' }
 ];
 
+// Componente que pinta la estructura fija del panel admin.
 export const AdminLayout: React.FC = () => {
+  // Usuario actual y funcion para cerrar sesion.
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Al cerrar sesion limpia AuthContext y vuelve al login.
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -24,6 +30,7 @@ export const AdminLayout: React.FC = () => {
 
   return (
     <div className="admin-shell">
+      {/* Barra lateral visible con marca, usuario y navegacion. */}
       <aside className="admin-sidebar">
         <div className="admin-brand">
           <div className="admin-logo">🏨</div>
@@ -59,6 +66,7 @@ export const AdminLayout: React.FC = () => {
         </button>
       </aside>
 
+      {/* Area principal donde Outlet renderiza la pagina hija. */}
       <main className="admin-main">
         <header className="admin-topbar">
           <h1>Bienvenido al panel administrativo</h1>

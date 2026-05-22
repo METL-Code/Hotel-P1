@@ -1,3 +1,5 @@
+/* Estilos historicos del dashboard.
+   Este archivo se importa en AdminDashboard.tsx; varias clases tambien tienen estilos compartidos en App.css. */
 .dashboard {
   display: flex;
   flex-direction: column;

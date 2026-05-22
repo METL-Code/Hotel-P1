@@ -1,3 +1,5 @@
+// Pantalla de habitaciones asignadas al trabajador.
+// Muestra una tabla de habitaciones de ejemplo para seguimiento operativo.
 import React from 'react';
 
 const assignedRooms = [

@@ -1,5 +1,8 @@
+// Pantalla simple de reportes administrativos.
+// Se ve en /admin/reportes y sirve como resumen visual de metricas generales.
 import React from 'react';
 
+// Componente de resumen estatico; actualmente muestra datos de ejemplo, no DataContext.
 export const AdminReports: React.FC = () => {
   return (
     <div className="admin-page">
@@ -8,6 +11,7 @@ export const AdminReports: React.FC = () => {
         <p>Revisa datos generales del hotel y el rendimiento operativo.</p>
       </div>
 
+      {/* Tarjetas visibles con indicadores generales del hotel. */}
       <div className="admin-grid">
         <div className="stat-card report-card">
           <div className="stat-icon">💼</div>
@@ -42,6 +46,7 @@ export const AdminReports: React.FC = () => {
         </div>
       </div>
 
+      {/* Lista de observaciones visibles debajo de las tarjetas. */}
       <div className="admin-card report-insights">
         <h3>Observaciones clave</h3>
         <ul>

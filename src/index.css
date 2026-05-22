@@ -1,3 +1,5 @@
+/* Estilos globales minimos que se cargan desde main.tsx.
+   Aqui se define la base visual del documento antes de los estilos de App.css. */
 :root {
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);

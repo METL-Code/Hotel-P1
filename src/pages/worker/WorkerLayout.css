@@ -1,9 +1,13 @@
+/* Estilos del layout trabajador.
+   Se ven en /trabajador/*: sidebar, usuario, navegacion y contenido. */
+/* Contenedor general del layout: sidebar + area principal. */
 .worker-shell {
   display: flex;
   min-height: 100vh;
   background: #f4f6fb;
 }
 
+/* Barra lateral fija con marca, usuario, nav y logout. */
 .worker-sidebar {
   width: 280px;
   background: #1f2937;
@@ -39,12 +43,14 @@
   gap: 8px;
 }
 
+/* Navegacion vertical; active indica la ruta actual. */
 .worker-nav {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+/* Navegacion vertical; active indica la ruta actual. */
 .worker-nav-link {
   display: flex;
   align-items: center;
@@ -56,10 +62,12 @@
   transition: background 0.2s, color 0.2s;
 }
 
+/* Navegacion vertical; active indica la ruta actual. */
 .worker-nav-link:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Navegacion vertical; active indica la ruta actual. */
 .worker-nav-link.active {
   background: #4f46e5;
   color: white;
@@ -76,6 +84,7 @@
   cursor: pointer;
 }
 
+/* Zona derecha donde se muestra el contenido de Outlet. */
 .worker-main {
   flex: 1;
   display: flex;
@@ -98,12 +107,15 @@
   padding: 24px 32px 32px;
 }
 
+/* En pantallas medianas el sidebar pasa arriba. */
 @media (max-width: 1024px) {
-  .worker-shell {
+  /* Contenedor general del layout: sidebar + area principal. */
+.worker-shell {
     flex-direction: column;
   }
 
-  .worker-sidebar {
+  /* Barra lateral fija con marca, usuario, nav y logout. */
+.worker-sidebar {
     width: 100%;
     flex-direction: row;
     align-items: flex-start;
@@ -112,7 +124,8 @@
     padding: 18px 20px;
   }
 
-  .worker-main {
+  /* Zona derecha donde se muestra el contenido de Outlet. */
+.worker-main {
     width: 100%;
   }
 

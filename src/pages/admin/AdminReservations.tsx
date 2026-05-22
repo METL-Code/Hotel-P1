@@ -1,11 +1,17 @@
+// Pantalla de administracion de reservaciones.
+// Se ve en /admin/reservaciones y permite crear reservas, filtrar por estado y consultar calendario.
 import React, { useState } from 'react';
 import type { ClientType } from '../../context/DataContext';
 import { useData } from '../../context/DataContext';
 
+// Componente de gestion de reservas: formulario, resumen, tabla y calendario.
 export const AdminReservations: React.FC = () => {
+  // Datos y acciones de reservas/habitaciones desde DataContext.
   const { reservations, rooms, addReservation, deleteReservation } = useData();
+  // Filtro de estado usado por la tabla de reservas.
   const [filter, setFilter] = useState<'Todas' | 'Confirmada' | 'Pendiente' | 'Cancelada'>('Todas');
 
+  // Estados del formulario de crear reserva.
   const [guest, setGuest] = useState('');
   const [room, setRoom] = useState('');
   const [checkin, setCheckin] = useState('');
@@ -13,21 +19,25 @@ export const AdminReservations: React.FC = () => {
   const [reservationPrice, setReservationPrice] = useState<number | ''>('');
   const [clientType, setClientType] = useState<ClientType>('Persona comun');
   const [statusNew, setStatusNew] = useState<'Confirmada' | 'Pendiente' | 'Cancelada'>('Pendiente');
+  // Estados del modal/calendario para conflictos de fecha.
   const [conflictMessage, setConflictMessage] = useState('');
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedCalendarRoom, setSelectedCalendarRoom] = useState('');
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
+  // Convierte YYYY-MM-DD a Date local para pintar el calendario.
   const parseLocalDate = (date: string) => {
     const [year, month, day] = date.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
 
+  // Formatea dias del calendario a YYYY-MM-DD para comparar reservas.
   const formatDateValue = (year: number, month: number, day: number) => (
     `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   );
 
-  const handleAddReservation = (e: React.FormEvent) => {
+  // Crea reserva y evita cruces de fecha en la misma habitacion.
+  const handleAddReservation = async (e: React.FormEvent) => {
     e.preventDefault();
     const guestName = guest.trim();
     const roomNumber = room.trim();
@@ -45,7 +55,8 @@ export const AdminReservations: React.FC = () => {
       return;
     }
 
-    addReservation({ guest: guestName, room: roomNumber, price: Number(reservationPrice), clientType, status: statusNew, checkin, checkout });
+    const saved = await addReservation({ guest: guestName, room: roomNumber, price: Number(reservationPrice), clientType, status: statusNew, checkin, checkout });
+    if (!saved) return;
     setGuest('');
     setRoom('');
     setCheckin('');
@@ -55,11 +66,13 @@ export const AdminReservations: React.FC = () => {
     setStatusNew('Pendiente');
   };
 
-  const handleDeleteReservation = (id: number) => {
+  // Elimina una reserva desde la tabla.
+  const handleDeleteReservation = async (id: number) => {
     if (!confirm('¿Eliminar reservación?')) return;
-    deleteReservation(id);
+    await deleteReservation(id);
   };
 
+  // Conteos visibles en el resumen de reservaciones.
   const confirmedReservations = reservations.filter((item) => item.status === 'Confirmada').length;
   const pendingReservations = reservations.filter((item) => item.status === 'Pendiente').length;
   const canceledReservations = reservations.filter((item) => item.status === 'Cancelada').length;
@@ -74,6 +87,7 @@ export const AdminReservations: React.FC = () => {
     const day = index - calendarOffset + 1;
     return day > 0 ? day : null;
   });
+  // Dias ocupados de la habitacion seleccionada para colorear el calendario.
   const reservedDays = new Set(
     reservations
       .filter((reservation) => (
@@ -95,6 +109,7 @@ export const AdminReservations: React.FC = () => {
       })
   );
 
+  // Obtiene reservas de un dia especifico para mostrar tooltip.
   const getReservationsForDay = (day: number) => {
     const dateValue = formatDateValue(currentYear, currentMonth, day);
     const selectedRoom = selectedCalendarRoom.trim().toLowerCase();
@@ -107,10 +122,12 @@ export const AdminReservations: React.FC = () => {
     ));
   };
 
+  // Cambia mes visible del calendario.
   const changeCalendarMonth = (direction: -1 | 1) => {
     setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
   };
 
+  // Abre el modal del calendario tomando la primera habitacion disponible.
   const openCalendar = () => {
     setSelectedCalendarRoom(rooms[0]?.number ?? '');
     setCalendarMonth(new Date());

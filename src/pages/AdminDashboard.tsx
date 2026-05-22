@@ -1,3 +1,6 @@
+// Dashboard principal compartido por administrador y trabajador.
+// Se ve en /admin/dashboard y /trabajador/dashboard.
+// Muestra indicadores, accesos rapidos y modales para gestionar habitaciones/reservas.
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { ClientType } from '../context/DataContext';
@@ -5,16 +8,22 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import './AdminDashboard.css';
 
+// Filtros usados para abrir el modal de habitaciones segun su estado.
 type RoomFilter = 'Disponible' | 'Ocupada' | 'Mantenimiento';
+// Define que contenido muestra el modal: habitaciones, reservas o nada.
 type ModalType = 'rooms' | 'reservations' | null;
 
+// Devuelve la fecha local en formato YYYY-MM-DD para comparar reservas de hoy.
 const localDate = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
+// Componente visual del dashboard. Consume datos globales y renderiza la pagina.
 export const AdminDashboard: React.FC = () => {
+  // Usuario logueado; se muestra en el saludo superior.
   const { user } = useAuth();
+  // Ruta actual; permite saber si se esta en panel admin o trabajador.
   const location = useLocation();
   const {
     rooms,
@@ -27,17 +36,21 @@ export const AdminDashboard: React.FC = () => {
     setRoomMaintenance
   } = useData();
 
+  // Estado general del modal: abierto/cerrado, titulo y tipo de contenido.
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalType, setModalType] = useState<ModalType>(null);
+  // Filtros que controlan que habitaciones o reservas aparecen dentro del modal.
   const [roomFilter, setRoomFilter] = useState<RoomFilter>('Disponible');
   const [reservationFilter, setReservationFilter] = useState<'today' | 'upcoming'>('today');
+  // Estados para pedir motivo antes de cancelar reservas u ocupaciones.
   const [cancelingReservationId, setCancelingReservationId] = useState<number | null>(null);
   const [cancelReasonText, setCancelReasonText] = useState('');
   const [cancelingRoomId, setCancelingRoomId] = useState<number | null>(null);
   const [cancelRoomReason, setCancelRoomReason] = useState('');
   const [availableRoomId, setAvailableRoomId] = useState<number | null>(null);
   const [availableReasonText, setAvailableReasonText] = useState('');
+  // Estados del formulario de ocupacion que aparece dentro del modal de habitaciones.
   const [occupyingRoomId, setOccupyingRoomId] = useState<number | null>(null);
   const [cedula, setCedula] = useState('');
   const [nombres, setNombres] = useState('');
@@ -47,18 +60,22 @@ export const AdminDashboard: React.FC = () => {
   const [occupancyClientType, setOccupancyClientType] = useState<ClientType>('Persona comun');
   const [guestLookupMsg, setGuestLookupMsg] = useState<string | null>(null);
 
+  // Indicadores superiores visibles en las tarjetas del dashboard.
   const availableRooms = rooms.filter((room) => room.status === 'Disponible').length;
   const occupiedRooms = rooms.filter((room) => room.status === 'Ocupada').length;
   const maintenanceRooms = rooms.filter((room) => room.status === 'Mantenimiento').length;
+  // Listas filtradas para saber que reservas son de hoy y cuales son futuras.
   const today = localDate();
   const todayReservations = reservations.filter((reservation) => reservation.checkin === today);
   const upcomingReservations = reservations.filter((reservation) => reservation.checkin > today);
   const visibleReservations = reservationFilter === 'today' ? todayReservations : upcomingReservations;
   const visibleRooms = rooms.filter((room) => room.status === roomFilter);
+  // Ajusta textos y enlaces dependiendo del panel desde el que se entro.
   const isWorkerPanel = location.pathname.startsWith('/trabajador');
   const panelPath = isWorkerPanel ? '/trabajador' : '/admin';
   const panelRoleLabel = isWorkerPanel ? 'Usuario' : 'Administrador';
 
+  // Abre el modal de habitaciones al hacer clic en una tarjeta de habitaciones.
   const openRoomsModal = (title: string, filter: RoomFilter) => {
     setModalTitle(title);
     setRoomFilter(filter);
@@ -66,6 +83,7 @@ export const AdminDashboard: React.FC = () => {
     setModalOpen(true);
   };
 
+  // Abre el modal de reservas al hacer clic en las tarjetas de reservas.
   const openReservationsModal = (title: string, filter: 'today' | 'upcoming') => {
     setModalTitle(title);
     setReservationFilter(filter);
@@ -73,6 +91,7 @@ export const AdminDashboard: React.FC = () => {
     setModalOpen(true);
   };
 
+  // Cierra el modal y limpia estados temporales para evitar datos pegados.
   const closeModal = () => {
     setModalOpen(false);
     setModalType(null);
@@ -82,6 +101,7 @@ export const AdminDashboard: React.FC = () => {
     setOccupyingRoomId(null);
   };
 
+  // Limpia el formulario de ocupacion de habitacion.
   const resetOccupancyForm = () => {
     setOccupyingRoomId(null);
     setCedula('');
@@ -93,26 +113,29 @@ export const AdminDashboard: React.FC = () => {
     setGuestLookupMsg(null);
   };
 
-  const confirmRoomAvailable = () => {
+  // Confirma que una habitacion vuelve a Disponible desde Mantenimiento.
+  const confirmRoomAvailable = async () => {
     if (availableRoomId === null) return;
     if (!availableReasonText.trim()) {
       alert('Escribe un motivo.');
       return;
     }
 
-    updateRoomStatus(availableRoomId, 'Disponible', availableReasonText.trim());
+    const saved = await updateRoomStatus(availableRoomId, 'Disponible', availableReasonText.trim());
+    if (!saved) return;
     setAvailableRoomId(null);
     setAvailableReasonText('');
   };
 
-  const confirmOccupancy = () => {
+  // Valida y confirma la ocupacion de una habitacion con datos del huesped.
+  const confirmOccupancy = async () => {
     if (occupyingRoomId === null) return;
     if (!cedula.trim() || !nombres.trim() || !apellidos.trim() || occupancyPrice === '' || Number(occupancyPrice) <= 0) {
       alert('Cedula, nombres, apellidos y un valor mayor a cero son obligatorios.');
       return;
     }
 
-    occupyRoomWithGuest(
+    const saved = await occupyRoomWithGuest(
       occupyingRoomId,
       {
         cedula: cedula.trim(),
@@ -123,9 +146,10 @@ export const AdminDashboard: React.FC = () => {
       Number(occupancyPrice),
       occupancyClientType
     );
-    resetOccupancyForm();
+    if (saved) resetOccupancyForm();
   };
 
+  // Activa el formulario para ocupar una habitacion especifica.
   const beginOccupancy = (roomId: number) => {
     setOccupyingRoomId(roomId);
     setCedula('');
@@ -139,6 +163,7 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="dashboard-page">
+      {/* Encabezado visible con saludo y rol del panel actual. */}
       <div className="dashboard-welcome">
         <div>
           <h2>Bienvenido, {user?.username}!</h2>
@@ -147,6 +172,7 @@ export const AdminDashboard: React.FC = () => {
         <div className={`dashboard-badge ${isWorkerPanel ? 'worker-badge' : ''}`}>{panelRoleLabel}</div>
       </div>
 
+      {/* Tarjetas de estadisticas. Cada tarjeta abre un modal filtrado. */}
       <div className="stats-grid">
         <button className="stat-card" onClick={() => openRoomsModal('Habitaciones Disponibles', 'Disponible')}>
           <div className="stat-icon">🏨</div>
@@ -185,6 +211,7 @@ export const AdminDashboard: React.FC = () => {
         </button>
       </div>
 
+      {/* Accesos rapidos visibles debajo de las estadisticas. */}
       <div className="admin-actions">
         <h3>Acciones rapidas</h3>
         <div className="actions-grid">
@@ -205,6 +232,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Modal reutilizable para mostrar reservas o habitaciones segun modalType. */}
       {modalOpen && (
         <div className="dashboard-modal-overlay" onClick={closeModal}>
           <div className="dashboard-modal" onClick={(event) => event.stopPropagation()}>
@@ -213,6 +241,7 @@ export const AdminDashboard: React.FC = () => {
               <button className="modal-close" onClick={closeModal}>x</button>
             </div>
             <div className="modal-content">
+              {/* Lista de reservas dentro del modal: confirmar llegada o cancelar. */}
               {modalType === 'reservations' ? (
                 visibleReservations.length ? (
                   <ul className="modal-list">
@@ -240,17 +269,19 @@ export const AdminDashboard: React.FC = () => {
                 )
               ) : null}
 
+              {/* Formulario de motivo para cancelar una reserva. */}
               {modalType === 'reservations' && cancelingReservationId !== null ? (
                 <div style={{ marginTop: 12 }}>
                   <h4>Motivo de cancelacion</h4>
                   <textarea value={cancelReasonText} onChange={(event) => setCancelReasonText(event.target.value)} placeholder="Escribe el motivo" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' }} />
                   <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                    <button className="admin-action-btn" onClick={() => {
+                    <button className="admin-action-btn" onClick={async () => {
                       if (!cancelReasonText.trim()) {
                         alert('Escribe un motivo.');
                         return;
                       }
-                      updateReservationStatus(cancelingReservationId, 'Cancelada', cancelReasonText.trim());
+                      const saved = await updateReservationStatus(cancelingReservationId, 'Cancelada', cancelReasonText.trim());
+                      if (!saved) return;
                       setCancelingReservationId(null);
                       setCancelReasonText('');
                     }}>
@@ -261,6 +292,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ) : null}
 
+              {/* Lista de habitaciones dentro del modal: ocupar, liberar, mantener o cancelar. */}
               {modalType === 'rooms' ? (
                 <div>
                   {visibleRooms.length ? (
@@ -291,6 +323,7 @@ export const AdminDashboard: React.FC = () => {
                               ) : null}
                             </div>
                           </div>
+                          {/* Formulario embebido para registrar huesped y valor al ocupar. */}
                           {occupyingRoomId === room.id ? (
                             <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
                               <h4>Ocupar habitacion - Datos del huesped</h4>
@@ -356,6 +389,7 @@ export const AdminDashboard: React.FC = () => {
                     <p className="modal-empty">No hay habitaciones para mostrar.</p>
                   )}
 
+                  {/* Motivo obligatorio para sacar una habitacion de mantenimiento. */}
                   {availableRoomId !== null ? (
                     <div style={{ marginTop: 12 }}>
                       <h4>Motivo para volver a Disponible</h4>
@@ -367,17 +401,19 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   ) : null}
 
+                  {/* Motivo obligatorio para cancelar una entrada activa. */}
                   {cancelingRoomId !== null ? (
                     <div style={{ marginTop: 12 }}>
                       <h4>Motivo de cancelacion de entrada</h4>
                       <textarea value={cancelRoomReason} onChange={(event) => setCancelRoomReason(event.target.value)} placeholder="Escribe el motivo" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' }} />
                       <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                        <button className="admin-action-btn" onClick={() => {
+                        <button className="admin-action-btn" onClick={async () => {
                           if (!cancelRoomReason.trim()) {
                             alert('Escribe un motivo.');
                             return;
                           }
-                          cancelRoomOccupancy(cancelingRoomId, cancelRoomReason.trim());
+                          const saved = await cancelRoomOccupancy(cancelingRoomId, cancelRoomReason.trim());
+                          if (!saved) return;
                           setCancelingRoomId(null);
                           setCancelRoomReason('');
                         }}>

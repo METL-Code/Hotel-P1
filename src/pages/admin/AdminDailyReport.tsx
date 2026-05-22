@@ -1,19 +1,26 @@
+// Informe diario administrativo.
+// Se ve en /admin/informe-diario y calcula ingresos del dia con entradas activas/canceladas.
 import React from 'react';
 import { useData } from '../../context/DataContext';
 
+// Devuelve la fecha del dia actual en formato YYYY-MM-DD.
 const today = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
+// Formatea valores numericos como pesos colombianos.
 const money = (value: number) => value.toLocaleString('es-CO', {
   style: 'currency',
   currency: 'COP',
   maximumFractionDigits: 0
 });
 
+// Componente del informe diario; usa occupancyEntries creadas al ocupar habitaciones.
 export const AdminDailyReport: React.FC = () => {
+  // Entradas activas/canceladas guardadas en DataContext.
   const { occupancyEntries } = useData();
+  // Filtros y totales que se ven en tarjetas y tablas del informe diario.
   const reportDate = today();
   const activeEntries = occupancyEntries.filter((entry) => entry.date === reportDate && entry.status === 'Activa');
   const canceledEntries = occupancyEntries.filter((entry) => entry.canceledAt === reportDate);
@@ -27,6 +34,7 @@ export const AdminDailyReport: React.FC = () => {
         <p>Entradas ocupadas y canceladas del dia {reportDate}.</p>
       </div>
 
+      {/* Tarjetas resumen del dia. */}
       <div className="admin-grid">
         <div className="stat-card report-card">
           <div className="stat-icon">💰</div>
@@ -51,6 +59,7 @@ export const AdminDailyReport: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabla visible de entradas activas del dia. */}
       <div className="admin-card">
         <h3>Entradas activas</h3>
         <div className="table-wrapper">
@@ -80,6 +89,7 @@ export const AdminDailyReport: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabla visible de entradas canceladas del dia. */}
       <div className="admin-card">
         <h3>Entradas canceladas</h3>
         <div className="table-wrapper">

@@ -1,5 +1,8 @@
+// Pantalla de mensajes del trabajador.
+// Permite crear mensajes locales y ver un historial simple en la misma pantalla.
 import React, { useState } from 'react';
 
+// Modelo de mensaje visible en el historial.
 interface Message {
   id: number;
   from: string;
@@ -8,16 +11,20 @@ interface Message {
   time: string;
 }
 
+// Mensajes iniciales de ejemplo.
 const initialMessages: Message[] = [
   { id: 1, from: 'Supervisor', subject: 'Cambio de horario', body: 'Por favor, revisa el turno de mañana.', time: 'Hace 20 minutos' },
   { id: 2, from: 'Recepción', subject: 'Reserva urgente', body: 'Gestiona la habitación 207 antes de las 14:00.', time: 'Hace 1 hora' }
 ];
 
+// Componente para enviar mensajes y ver historial local.
 export const WorkerMessages: React.FC = () => {
+  // Estado local de mensajes y campos del formulario.
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
 
+  // Agrega un mensaje nuevo al inicio del historial.
   const handleSend = (event: React.FormEvent) => {
     event.preventDefault();
     if (!subject || !body) return;

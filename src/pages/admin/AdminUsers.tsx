@@ -1,8 +1,11 @@
+// Pantalla de administracion de usuarios.
+// Se ve en /admin/usuarios y permite crear, editar, activar, desactivar y eliminar usuarios.
 import React, { useEffect, useState } from 'react';
 import type { AdminUser } from '../../context/DataContext';
 import { useData } from '../../context/DataContext';
-import { apiGet, apiSend } from '../../services/api';
+import { apiGet, apiSend, isApiEnabled } from '../../services/api';
 
+// Tipos de respuesta esperados desde backend/server.js.
 interface UsersResponse {
   users: AdminUser[];
 }
@@ -11,10 +14,14 @@ interface UserResponse {
   user: AdminUser;
 }
 
+// Componente de CRUD de usuarios: formulario a la izquierda y tabla a la derecha.
 export const AdminUsers: React.FC = () => {
+  // Datos locales y acciones de DataContext para modo sin API.
   const { users, addUser, updateUser, toggleUserStatus, deleteUser } = useData();
+  // Lista que se muestra en pantalla; viene de API si esta activa o localStorage si no.
   const [visibleUsers, setVisibleUsers] = useState<AdminUser[]>(users);
   const [backendEnabled, setBackendEnabled] = useState(false);
+  // Estados del formulario de crear/editar usuario.
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [nombres, setNombres] = useState('');
   const [apellidos, setApellidos] = useState('');
@@ -23,7 +30,14 @@ export const AdminUsers: React.FC = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'trabajador'>('trabajador');
 
+  // Carga usuarios desde API si esta activada; si no, usa los datos locales.
   useEffect(() => {
+    if (!isApiEnabled()) {
+      setVisibleUsers(users);
+      setBackendEnabled(false);
+      return;
+    }
+
     let active = true;
 
     apiGet<UsersResponse>('/api/users')
@@ -43,6 +57,7 @@ export const AdminUsers: React.FC = () => {
     };
   }, [users]);
 
+  // Limpia el formulario despues de guardar o cancelar edicion.
   const resetForm = () => {
     setEditingUserId(null);
     setNombres('');
@@ -53,6 +68,7 @@ export const AdminUsers: React.FC = () => {
     setRole('trabajador');
   };
 
+  // Valida campos obligatorios y evita usuarios/email duplicados.
   const validateUserFields = () => {
     const nextUser = username.trim();
     const nextEmail = email.trim();
@@ -89,6 +105,7 @@ export const AdminUsers: React.FC = () => {
     };
   };
 
+  // Decide si crear un usuario nuevo o actualizar uno existente.
   const handleSubmitUser = async (event: React.FormEvent) => {
     event.preventDefault();
     const userFields = validateUserFields();
@@ -124,6 +141,7 @@ export const AdminUsers: React.FC = () => {
     resetForm();
   };
 
+  // Carga los datos de un usuario en el formulario para editarlo.
   const beginEditUser = (id: number) => {
     const user = visibleUsers.find((item) => item.id === id);
     if (!user) return;
@@ -137,6 +155,7 @@ export const AdminUsers: React.FC = () => {
     setRole(user.role);
   };
 
+  // Elimina un usuario despues de confirmar la accion.
   const handleDeleteUser = async (id: number) => {
     if (!confirm('Eliminar usuario? Esta accion no se puede deshacer.')) return;
     if (editingUserId === id) {
@@ -150,6 +169,7 @@ export const AdminUsers: React.FC = () => {
     }
   };
 
+  // Cambia el estado visible Activo/Inactivo de un usuario.
   const toggleStatus = async (id: number) => {
     if (backendEnabled) {
       const data = await apiSend<UserResponse>(`/api/users/${id}`, 'PATCH');

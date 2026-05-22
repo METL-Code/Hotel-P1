@@ -1,3 +1,6 @@
+/* Estilos de la pantalla de login.
+   Se ven en /: fondo, caja central, botones de rol, formulario y mensajes de error. */
+/* Contenedor de pantalla completa con fondo degradado. */
 .login-container {
   display: flex;
   justify-content: center;
@@ -9,6 +12,7 @@
     sans-serif;
 }
 
+/* Caja central blanca donde se ve el login. */
 .login-box {
   background: white;
   border-radius: 15px;
@@ -27,6 +31,7 @@
 }
 
 /* Role Selection */
+/* Vista inicial para escoger Administrador o Usuario. */
 .role-selection {
   text-align: center;
 }
@@ -97,6 +102,7 @@
 }
 
 /* Login Form */
+/* Formulario visible despues de elegir rol. */
 .login-form {
   animation: slideIn 0.3s ease-out;
 }
@@ -182,6 +188,7 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Caja roja donde se muestran errores de login/API. */
 .error-message {
   background: #ffe8e8;
   border-left: 4px solid #e74c3c;
@@ -252,7 +259,8 @@
 
 /* Responsive */
 @media (max-width: 480px) {
-  .login-box {
+  /* Caja central blanca donde se ve el login. */
+.login-box {
     padding: 30px 20px;
   }
 

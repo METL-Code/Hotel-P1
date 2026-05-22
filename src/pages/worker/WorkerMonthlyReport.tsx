@@ -1,19 +1,26 @@
+// Informe mensual del trabajador.
+// Resume entradas activas y canceladas del mes usando DataContext.
 import React from 'react';
 import { useData } from '../../context/DataContext';
 
+// Devuelve el mes actual en formato YYYY-MM.
 const currentMonth = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
+// Formatea valores como pesos colombianos.
 const money = (value: number) => value.toLocaleString('es-CO', {
   style: 'currency',
   currency: 'COP',
   maximumFractionDigits: 0
 });
 
+// Componente de informe mensual para trabajador.
 export const WorkerMonthlyReport: React.FC = () => {
+  // Entradas compartidas desde DataContext.
   const { occupancyEntries } = useData();
+  // Calculos mensuales visibles en tarjetas y tablas.
   const month = currentMonth();
   const activeEntries = occupancyEntries.filter((entry) => entry.date.startsWith(month) && entry.status === 'Activa');
   const canceledEntries = occupancyEntries.filter((entry) => entry.canceledAt?.startsWith(month));

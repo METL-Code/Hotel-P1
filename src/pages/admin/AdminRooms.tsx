@@ -1,25 +1,34 @@
+// Pantalla de administracion de habitaciones.
+// Se ve en /admin/habitaciones y permite crear habitaciones, cambiar estado y cancelar ocupaciones.
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 
+// Componente de gestion de habitaciones: alta, resumen, tabla y cambios de estado.
 export const AdminRooms: React.FC = () => {
+  // Datos y acciones de habitaciones compartidas por DataContext.
   const { rooms, addRoom, updateRoomStatus, deleteRoom, cancelRoomOccupancy } = useData();
 
+  // Estados del formulario para crear una habitacion nueva.
   const [number, setNumber] = useState('');
   const [type, setType] = useState('Doble');
   const [statusNew, setStatusNew] = useState<'Disponible' | 'Mantenimiento'>('Disponible');
+  // Estados del modal para cancelar una ocupacion activa.
   const [cancelingRoomId, setCancelingRoomId] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
+  // Conteos que se ven en el resumen de habitaciones.
   const availableRooms = rooms.filter((r) => r.status === 'Disponible').length;
   const occupiedRooms = rooms.filter((r) => r.status === 'Ocupada').length;
   const maintenanceRooms = rooms.filter((r) => r.status === 'Mantenimiento').length;
 
+  // Devuelve la clase CSS del color del estado.
   const getStatusClass = (status: 'Disponible' | 'Ocupada' | 'Mantenimiento') => {
     if (status === 'Disponible') return 'status-pill status-disponible';
     if (status === 'Ocupada') return 'status-pill status-ocupada';
     return 'status-pill status-mantenimiento';
   };
 
+  // Cambia estados permitidos; ocupar requiere datos de huesped desde Dashboard.
   const updateStatus = (id: number, nextStatus: 'Disponible' | 'Ocupada' | 'Mantenimiento') => {
     if (nextStatus === 'Ocupada') {
       alert('Para ocupar una habitacion, usa el dashboard y registra huesped y valor acordado.');
@@ -28,18 +37,21 @@ export const AdminRooms: React.FC = () => {
     updateRoomStatus(id, nextStatus);
   };
 
-  const confirmCancelOccupancy = () => {
+  // Confirma cancelacion de entrada y libera la habitacion.
+  const confirmCancelOccupancy = async () => {
     if (cancelingRoomId === null) return;
     if (!cancelReason.trim()) {
       alert('Escribe un motivo.');
       return;
     }
-    cancelRoomOccupancy(cancelingRoomId, cancelReason.trim());
+    const saved = await cancelRoomOccupancy(cancelingRoomId, cancelReason.trim());
+    if (!saved) return;
     setCancelingRoomId(null);
     setCancelReason('');
   };
 
-  const handleAddRoom = (e: React.FormEvent) => {
+  // Crea una habitacion despues de validar numero unico.
+  const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     const roomNumber = number.trim();
     if (!roomNumber || !type) return;
@@ -49,15 +61,17 @@ export const AdminRooms: React.FC = () => {
       return;
     }
 
-    addRoom({ number: roomNumber, type, status: statusNew });
+    const saved = await addRoom({ number: roomNumber, type, status: statusNew });
+    if (!saved) return;
     setNumber('');
     setType('Doble');
     setStatusNew('Disponible');
   };
 
-  const handleDeleteRoom = (id: number) => {
+  // Elimina una habitacion despues de confirmacion.
+  const handleDeleteRoom = async (id: number) => {
     if (!confirm('Eliminar habitacion?')) return;
-    deleteRoom(id);
+    await deleteRoom(id);
   };
 
   return (

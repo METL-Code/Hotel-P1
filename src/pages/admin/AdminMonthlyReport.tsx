@@ -1,19 +1,26 @@
+// Informe mensual administrativo.
+// Se ve en /admin/informe-mensual y calcula ingresos del mes con entradas activas/canceladas.
 import React from 'react';
 import { useData } from '../../context/DataContext';
 
+// Devuelve el mes actual en formato YYYY-MM para filtrar entradas.
 const currentMonth = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
+// Formatea valores numericos como pesos colombianos.
 const money = (value: number) => value.toLocaleString('es-CO', {
   style: 'currency',
   currency: 'COP',
   maximumFractionDigits: 0
 });
 
+// Componente del informe mensual; resume entradas activas y canceladas del mes.
 export const AdminMonthlyReport: React.FC = () => {
+  // Entradas financieras guardadas por DataContext.
   const { occupancyEntries } = useData();
+  // Filtros y totales que se ven en tarjetas y tablas del informe mensual.
   const month = currentMonth();
   const activeEntries = occupancyEntries.filter((entry) => entry.date.startsWith(month) && entry.status === 'Activa');
   const canceledEntries = occupancyEntries.filter((entry) => entry.canceledAt?.startsWith(month));
@@ -27,6 +34,7 @@ export const AdminMonthlyReport: React.FC = () => {
         <p>Resumen de entradas ocupadas y canceladas del mes {month}.</p>
       </div>
 
+      {/* Tarjetas resumen del mes. */}
       <div className="admin-grid">
         <div className="stat-card report-card">
           <div className="stat-icon">💰</div>
@@ -51,6 +59,7 @@ export const AdminMonthlyReport: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabla visible de entradas activas del mes. */}
       <div className="admin-card">
         <h3>Entradas activas del mes</h3>
         <div className="table-wrapper">
@@ -82,6 +91,7 @@ export const AdminMonthlyReport: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabla visible de entradas canceladas del mes. */}
       <div className="admin-card">
         <h3>Entradas canceladas del mes</h3>
         <div className="table-wrapper">

@@ -1,6 +1,10 @@
+// Pantalla de configuracion administrativa.
+// Se ve en /admin/configuracion y muestra opciones generales del sistema.
 import React, { useState } from 'react';
 
+// Componente de preferencias visuales del sistema.
 export const AdminSettings: React.FC = () => {
+  // Estados de interruptores que se ven como checkboxes en configuracion.
   const [notifications, setNotifications] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [alertLowStock, setAlertLowStock] = useState(true);
@@ -12,6 +16,7 @@ export const AdminSettings: React.FC = () => {
         <p>Ajusta las opciones principales del sistema de gestión hotelera.</p>
       </div>
 
+      {/* Tarjeta con opciones tipo interruptor. Actualmente son locales a esta pantalla. */}
       <div className="admin-card settings-card">
         <h3>Preferencias del sistema</h3>
         <label className="setting-row">

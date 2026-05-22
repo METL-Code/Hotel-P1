@@ -1,3 +1,6 @@
+/* Estilos compartidos de toda la aplicacion.
+   Se ven en pantallas admin y trabajador: tarjetas, tablas, botones, modales, reportes y dashboard. */
+/* Reset visual: elimina margenes/paddings por defecto y hace sizing predecible. */
 * {
   margin: 0;
   padding: 0;
@@ -10,6 +13,7 @@ body {
   height: 100%;
 }
 
+/* Base del documento: tipografia, fondo y color principal. */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -37,6 +41,7 @@ textarea {
   font: inherit;
 }
 
+/* Contenedores principales de paginas admin/trabajador/dashboard. */
 .admin-page,
 .worker-page,
 .dashboard-page {
@@ -46,6 +51,7 @@ textarea {
   width: 100%;
 }
 
+/* Encabezado de cada pagina: titulo h2 y descripcion. */
 .page-header {
   display: flex;
   flex-direction: column;
@@ -62,6 +68,7 @@ textarea {
   max-width: 720px;
 }
 
+/* Grillas responsivas usadas para formularios, reportes y tarjetas. */
 .admin-grid,
 .report-grid {
   display: grid;
@@ -69,6 +76,7 @@ textarea {
   gap: 18px;
 }
 
+/* Tarjetas blancas compartidas en formularios, tablas, tareas y habitaciones. */
 .admin-card,
 .stat-card,
 .task-item,
@@ -87,6 +95,7 @@ textarea {
   margin: 0 0 14px 0;
 }
 
+/* Formularios administrativos: labels, inputs, textarea y selects. */
 .admin-form {
   display: grid;
   gap: 16px;
@@ -114,6 +123,7 @@ textarea {
   resize: vertical;
 }
 
+/* Botones principales y secundarios reutilizados en tablas y acciones. */
 .admin-action-btn,
 .table-btn,
 .task-btn,
@@ -125,6 +135,7 @@ textarea {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
+/* Botones principales y secundarios reutilizados en tablas y acciones. */
 .admin-action-btn,
 .action-btn {
   background: #4f46e5;
@@ -140,6 +151,7 @@ textarea {
   box-shadow: 0 10px 24px rgba(79, 70, 229, 0.18);
 }
 
+/* Wrapper que permite scroll horizontal en tablas pequenas. */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -170,6 +182,7 @@ th {
   font-size: 13px;
 }
 
+/* Tarjetas de tareas del trabajador. */
 .task-item {
   display: flex;
   flex-direction: column;
@@ -209,6 +222,7 @@ th {
   gap: 12px;
 }
 
+/* Tarjetas de mensajes del trabajador. */
 .message-item {
   display: flex;
   flex-direction: column;
@@ -251,6 +265,7 @@ th {
   gap: 18px;
 }
 
+/* Contenido interno de modales con scroll cuando hay muchas filas. */
 .modal-content {
   max-height: 60vh;
   overflow-y: auto;
@@ -276,6 +291,7 @@ th {
   color: #64748b;
 }
 
+/* Etiquetas de estado visibles en habitaciones. */
 .status-pill {
   display: inline-flex;
   padding: 6px 10px;
@@ -297,6 +313,7 @@ th {
   background: #f59e0b;
 }
 
+/* Fondo oscuro fijo usado por todos los modales. */
 .dashboard-modal-overlay {
   position: fixed;
   inset: 0;
@@ -350,7 +367,8 @@ th {
   background: #cbd5e1;
 }
 
-.modal-body {
+.modal-/* Base del documento: tipografia, fondo y color principal. */
+body {
   padding: 0 24px 24px 24px;
 }
 
@@ -358,7 +376,8 @@ th {
   width: min(420px, 100%);
 }
 
-.reservation-alert-modal .modal-body {
+.reservation-alert-modal .modal-/* Base del documento: tipografia, fondo y color principal. */
+body {
   display: grid;
   gap: 18px;
   color: #334155;
@@ -369,6 +388,7 @@ th {
   justify-self: end;
 }
 
+/* Boton y modal del calendario de reservas. */
 .reservations-calendar-btn {
   margin-top: 16px;
   width: 100%;
@@ -378,7 +398,8 @@ th {
   width: min(760px, 100%);
 }
 
-.reservations-calendar-modal .modal-body {
+.reservations-calendar-modal .modal-/* Base del documento: tipografia, fondo y color principal. */
+body {
   display: grid;
   gap: 18px;
 }
@@ -410,6 +431,7 @@ th {
   text-transform: capitalize;
 }
 
+/* Grilla de 7 columnas que pinta el calendario mensual. */
 .reservation-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(42px, 1fr));
@@ -550,6 +572,7 @@ th {
   gap: 18px;
 }
 
+/* Resumenes de habitaciones, reservas e informes. */
 .summary-card p {
   margin: 12px 0 0 0;
   color: #475569;
@@ -593,6 +616,7 @@ th {
   font-weight: 600;
 }
 
+/* Bloque superior del dashboard con saludo y badge de rol. */
 .dashboard-welcome {
   display: flex;
   justify-content: space-between;
@@ -631,16 +655,20 @@ th {
   gap: 16px;
 }
 
+/* Ajustes responsive para pantallas pequenas. */
 @media (max-width: 768px) {
   .dashboard-welcome,
-  .admin-card,
+  /* Tarjetas blancas compartidas en formularios, tablas, tareas y habitaciones. */
+.admin-card,
   .stat-card,
   .task-item,
-  .message-item {
+  /* Tarjetas de mensajes del trabajador. */
+.message-item {
     padding: 20px;
   }
 
-  .admin-grid,
+  /* Grillas responsivas usadas para formularios, reportes y tarjetas. */
+.admin-grid,
   .report-grid,
   .actions-grid {
     grid-template-columns: 1fr;

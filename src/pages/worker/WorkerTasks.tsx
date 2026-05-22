@@ -1,5 +1,8 @@
+// Pantalla de tareas del trabajador.
+// Muestra tareas de ejemplo y permite marcarlas como completadas en estado local.
 import React, { useState } from 'react';
 
+// Modelo de tarea mostrado en tarjetas.
 interface Task {
   id: number;
   title: string;
@@ -9,15 +12,19 @@ interface Task {
   completed: boolean;
 }
 
+// Datos de ejemplo iniciales para que la pantalla tenga contenido.
 const initialTasks: Task[] = [
   { id: 1, title: 'Limpiar habitación 101', due: 'Hoy', detail: 'Revisar minibar y cambiar sábanas', priority: 'Alta', completed: false },
   { id: 2, title: 'Preparar habitación 205', due: 'Hoy', detail: 'Reposición de amenities y aspirado', priority: 'Media', completed: false },
   { id: 3, title: 'Revisar stock de suministros', due: 'Mañana', detail: 'Verificar inventario de toallas y jabones', priority: 'Baja', completed: false }
 ];
 
+// Componente que permite ver tareas y marcarlas como completadas.
 export const WorkerTasks: React.FC = () => {
+  // Estado local de tareas; no se guarda en backend ni localStorage.
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
+  // Cambia completed true/false para actualizar la clase visual.
   const toggleComplete = (id: number) => {
     setTasks((prev) => prev.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task)));
   };

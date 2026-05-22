@@ -1,3 +1,5 @@
+/* Estilos del dashboard trabajador.
+   Se usan si WorkerDashboard.tsx se conecta a la ruta de trabajador. */
 .dashboard {
   display: flex;
   flex-direction: column;

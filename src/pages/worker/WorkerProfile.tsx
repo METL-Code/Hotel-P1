@@ -1,14 +1,20 @@
+// Pantalla de perfil del trabajador.
+// Permite editar datos personales en estado local y mostrar confirmacion visual.
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
+// Componente para editar datos personales en estado local.
 export const WorkerProfile: React.FC = () => {
+  // Usuario actual usado como valor inicial de nombre y correo.
   const { user } = useAuth();
+  // Estados del formulario visible en Mi perfil.
   const [name, setName] = useState(user?.username || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('555-123-456');
   const [note, setNote] = useState('Trabajador responsable de limpieza y orden.');
   const [saved, setSaved] = useState(false);
 
+  // Simula guardado y muestra mensaje temporal de exito.
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
     setSaved(true);

@@ -1,5 +1,8 @@
+// Pantalla de reportes del trabajador.
+// Muestra indicadores de ejemplo sobre rendimiento operativo.
 import React from 'react';
 
+// Componente de reportes estaticos del trabajador.
 export const WorkerReports: React.FC = () => {
   return (
     <div className="worker-page">
@@ -8,6 +11,7 @@ export const WorkerReports: React.FC = () => {
         <p>Visualiza tu rendimiento y entregas recientes.</p>
       </div>
 
+      {/* Tarjetas visibles con indicadores de ejemplo. */}
       <div className="admin-grid report-grid">
         <div className="stat-card report-card">
           <div className="stat-icon">✅</div>
