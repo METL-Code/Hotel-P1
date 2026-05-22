@@ -39,26 +39,34 @@ const dbConnectionTimeoutSeconds = Math.max(1, Math.ceil(dbConnectionTimeoutMs /
 const sqlServer = process.env.DB_INSTANCE
   ? `${process.env.DB_SERVER || 'DESKTOP-NSUD4A7'}\\${process.env.DB_INSTANCE}`
   : process.env.DB_SERVER || 'DESKTOP-NSUD4A7';
+const sqlDatabase = process.env.DB_DATABASE || 'HotelDB';
+const sqlUser = process.env.DB_USER || '';
+const sqlPassword = process.env.DB_PASSWORD || '';
+const useSqlAuthentication = Boolean(sqlUser && sqlPassword);
 
 // Configuracion completa para msnodesqlv8/mssql.
-// El login se queda esperando aqui si SQL Server no responde, por eso hay timeouts.
+// Si DB_USER y DB_PASSWORD existen, usa SQL Server Authentication; si no, usa Windows Authentication.
 const dbConfig = {
   connectionString: [
     `Driver={${process.env.DB_DRIVER || 'ODBC Driver 17 for SQL Server'}}`,
     `Server=${sqlServer}`,
-    `Database=${process.env.DB_DATABASE || 'HotelDB'}`,
-    'Trusted_Connection=Yes',
+    `Database=${sqlDatabase}`,
+    useSqlAuthentication ? `UID=${sqlUser}` : 'Trusted_Connection=Yes',
+    useSqlAuthentication ? `PWD=${sqlPassword}` : '',
     `Connection Timeout=${dbConnectionTimeoutSeconds}`,
     `Encrypt=${process.env.DB_ENCRYPT === 'true' ? 'Yes' : 'No'}`,
+    process.env.DB_TRUST_SERVER_CERTIFICATE === 'true' ? 'TrustServerCertificate=Yes' : '',
     process.env.DB_EXTRA || ''
   ].filter(Boolean).join(';'),
   server: sqlServer,
-  database: process.env.DB_DATABASE || 'HotelDB',
+  database: sqlDatabase,
+  user: useSqlAuthentication ? sqlUser : undefined,
+  password: useSqlAuthentication ? sqlPassword : undefined,
   driver: 'msnodesqlv8',
   connectionTimeout: dbConnectionTimeoutMs,
   requestTimeout: dbRequestTimeoutMs,
   options: {
-    trustedConnection: process.env.DB_TRUSTED_CONNECTION !== 'false',
+    trustedConnection: !useSqlAuthentication && process.env.DB_TRUSTED_CONNECTION !== 'false',
     encrypt: process.env.DB_ENCRYPT === 'true',
     trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE !== 'false'
   }

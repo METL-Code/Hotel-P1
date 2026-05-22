@@ -1,15 +1,20 @@
 -- Script inicial de base de datos para SQL Server.
 -- Se ejecuta manualmente en SQL Server Management Studio o una consola compatible.
 
--- Crea la base principal del proyecto solo si aun no existe en el servidor.
-IF DB_ID('HotelDB') IS NULL
+-- Nombre de base por defecto para desarrollo local.
+-- En hosting se puede sobrescribir con: sqlcmd -v DatabaseName="nombre_real"
+:setvar DatabaseName "HotelDB"
+
+-- Crea la base principal del proyecto solo si aun no existe y el usuario tiene permiso.
+IF DB_ID(N'$(DatabaseName)') IS NULL
 BEGIN
-    CREATE DATABASE HotelDB;
+    DECLARE @createDatabaseSql NVARCHAR(MAX) = N'CREATE DATABASE ' + QUOTENAME(N'$(DatabaseName)');
+    EXEC (@createDatabaseSql);
 END;
 GO
 
--- A partir de aqui todas las instrucciones trabajan dentro de HotelDB.
-USE HotelDB;
+-- A partir de aqui todas las instrucciones trabajan dentro de la base configurada.
+USE [$(DatabaseName)];
 GO
 
 -- Crea la tabla de usuarios solo si todavia no existe.
