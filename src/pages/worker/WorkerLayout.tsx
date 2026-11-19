@@ -1,24 +1,19 @@
 // Layout principal del panel trabajador.
-// Se ve en rutas /trabajador/* y contiene sidebar, datos del usuario y Outlet para la pantalla hija.
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './WorkerLayout.css';
 
-// Menu disponible para trabajador.
 const menuItems = [
   { to: 'dashboard', label: 'Dashboard', icon: '📊' },
   { to: 'reservaciones', label: 'Reservaciones', icon: '📅' },
   { to: 'configuracion', label: 'Configuracion', icon: '⚙️' }
 ];
 
-// Componente que pinta la estructura fija del panel trabajador.
 export const WorkerLayout: React.FC = () => {
-  // Usuario actual y funcion para cerrar sesion.
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Cierra sesion y regresa al login.
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -56,7 +51,7 @@ export const WorkerLayout: React.FC = () => {
           ))}
         </nav>
 
-        <button className="worker-logout" onClick={handleLogout}>
+        <button type="button" className="worker-logout" onClick={handleLogout}>
           Cerrar Sesion
         </button>
       </aside>

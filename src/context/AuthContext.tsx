@@ -1,9 +1,8 @@
 // Contexto global de autenticacion.
-// Aqui se guarda quien inicio sesion y se decide si entra como admin o trabajador.
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { apiSend, isApiEnabled } from '../services/api';
+// Valida las credenciales exclusivamente contra SQL Server a traves de backend/server.js.
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { apiGet, apiSend } from '../services/api';
 
-// Usuario minimo que necesita el frontend para proteger rutas y mostrar informacion.
 export interface User {
   id: string;
   username: string;
@@ -11,22 +10,15 @@ export interface User {
   role: 'admin' | 'trabajador';
 }
 
-// Forma esperada de la respuesta del backend cuando el login es exitoso.
 interface LoginResponse {
+  token: string;
   user: User;
 }
 
-// Usuario guardado en localStorage cuando se trabaja sin SQL Server.
-interface StoredAdminUser {
-  id: number;
-  username: string;
-  email: string;
-  password?: string;
-  role: 'admin' | 'trabajador';
-  status: 'Activo' | 'Inactivo';
+interface MeResponse {
+  user: User;
 }
 
-// Contrato de funciones y datos que cualquier pantalla puede usar desde useAuth().
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -34,111 +26,99 @@ interface AuthContextType {
   logout: () => void;
 }
 
-// Contexto React; empieza vacio y se llena dentro de AuthProvider.
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider que envuelve toda la app desde App.tsx.
-// Aqui vive el estado de sesion que se ve en layouts y rutas protegidas.
+const clearLegacyLocalCache = () => {
+  for (const key of ['hotel_rooms', 'hotel_users', 'hotel_guests', 'hotel_reservations', 'hotel_occupancy_entries']) {
+    localStorage.removeItem(key);
+  }
+};
+
+const readStoredUser = (): User | null => {
+  const storedUser = localStorage.getItem('hotel_user');
+  const storedToken = localStorage.getItem('hotel_token');
+  if (!storedUser || !storedToken) {
+    localStorage.removeItem('hotel_user');
+    localStorage.removeItem('hotel_token');
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(storedUser) as Partial<User>;
+    if (!parsed?.id || !parsed?.username || (parsed.role !== 'admin' && parsed.role !== 'trabajador')) {
+      localStorage.removeItem('hotel_user');
+      localStorage.removeItem('hotel_token');
+      return null;
+    }
+    return parsed as User;
+  } catch {
+    localStorage.removeItem('hotel_user');
+    localStorage.removeItem('hotel_token');
+    return null;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Lee la sesion guardada para que al recargar no se pierda el login.
   const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('hotel_user');
-    return storedUser ? (JSON.parse(storedUser) as User) : null;
+    clearLegacyLocalCache();
+    return readStoredUser();
   });
 
-  // Guarda o borra el usuario actual en localStorage y en el estado de React.
-  const saveUser = (nextUser: User | null) => {
-    if (nextUser) {
+  const saveSession = useCallback((nextUser: User | null, token?: string) => {
+    if (nextUser && token) {
+      localStorage.setItem('hotel_user', JSON.stringify(nextUser));
+      localStorage.setItem('hotel_token', token);
+    } else if (nextUser) {
       localStorage.setItem('hotel_user', JSON.stringify(nextUser));
     } else {
       localStorage.removeItem('hotel_user');
+      localStorage.removeItem('hotel_token');
     }
     setUser(nextUser);
-  };
+    window.dispatchEvent(new Event('hotel-auth-change'));
+  }, []);
 
-  // Flujo de inicio de sesion usado por LoginPage.
-  // Primero intenta API si esta activada; si falla por conexion usa modo local.
+  // Verifica la sesion contra SQL Server al cargar y reacciona si expira (HTTP 401).
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      window.dispatchEvent(new Event('hotel-auth-change'));
+    };
+    window.addEventListener('hotel-auth-expired', handleExpired);
+
+    const token = localStorage.getItem('hotel_token');
+    let active = true;
+    if (token) {
+      apiGet<MeResponse>('/api/auth/me')
+        .then((data) => {
+          if (active) saveSession(data.user);
+        })
+        .catch(() => {
+          if (active) saveSession(null);
+        });
+    }
+
+    return () => {
+      active = false;
+      window.removeEventListener('hotel-auth-expired', handleExpired);
+    };
+  }, [saveSession]);
+
   const login = async (username: string, password: string, role: 'admin' | 'trabajador') => {
-    if (!username || !password) {
+    if (!username.trim() || !password) {
       throw new Error('Usuario y contrasena son requeridos');
     }
 
-    // Si VITE_API_ENABLED=true, se intenta validar contra backend/server.js.
-    if (isApiEnabled()) {
-      try {
-        const data = await apiSend<LoginResponse>('/api/auth/login', 'POST', { username, password, role });
-        saveUser(data.user);
-        return;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : '';
-        const shouldUseLocalFallback =
-          error instanceof TypeError ||
-          message.includes('Server is not found') ||
-          message.includes('SQL Server') ||
-          message.includes('Error interno') ||
-          message.includes('Failed to fetch') ||
-          message.includes('La API no respondio a tiempo') ||
-          message.includes('Respuesta invalida') ||
-          message.includes('Error en el backend');
-
-        if (shouldUseLocalFallback) {
-          console.warn('Backend no disponible o SQL Server sin conexion. Usando login local temporal.');
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    // Fallback local: busca usuarios creados desde la app en localStorage.
-    const storedUsers = localStorage.getItem('hotel_users');
-    const users = storedUsers ? (JSON.parse(storedUsers) as StoredAdminUser[]) : [];
-    const foundUser = users.find((item) =>
-      item.username.toLowerCase() === username.trim().toLowerCase() &&
-      item.role === role
-    );
-
-    if (foundUser) {
-      if (foundUser.status !== 'Activo') {
-        throw new Error('Este usuario esta inactivo');
-      }
-
-      if (foundUser.password !== password) {
-        throw new Error('Usuario o contrasena incorrectos');
-      }
-
-      saveUser({
-        id: String(foundUser.id),
-        username: foundUser.username,
-        email: foundUser.email,
-        role: foundUser.role
-      });
-      return;
-    }
-
-    // Usuarios de emergencia para desarrollo local cuando no hay backend o SQL Server.
-    if (role === 'admin' && password === 'admin123') {
-      saveUser({
-        id: '1',
-        username,
-        email: `${username}@hotel.com`,
-        role: 'admin'
-      });
-    } else if (role === 'trabajador' && password === 'trabajador123') {
-      saveUser({
-        id: '2',
-        username,
-        email: `${username}@hotel.com`,
-        role: 'trabajador'
-      });
-    } else {
-      throw new Error('Usuario o contrasena incorrectos');
-    }
+    const data = await apiSend<LoginResponse>('/api/auth/login', 'POST', {
+      username: username.trim(),
+      password,
+      role
+    });
+    saveSession(data.user, data.token);
   };
 
-  // Cierra sesion y devuelve la app al estado sin usuario.
-  const logout = () => {
-    saveUser(null);
-  };
+  const logout = useCallback(() => {
+    saveSession(null);
+  }, [saveSession]);
 
   return (
     <AuthContext.Provider value={{
@@ -152,7 +132,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-// Hook usado por pantallas y rutas para leer login, usuario y logout.
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

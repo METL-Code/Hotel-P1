@@ -1,85 +1,115 @@
 // Pantalla de administracion de habitaciones.
-// Se ve en /admin/habitaciones y permite crear habitaciones, cambiar estado y cancelar ocupaciones.
+// Se ve en /admin/habitaciones y permite crear habitaciones, cambiar estado y anular ocupaciones.
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 
-// Componente de gestion de habitaciones: alta, resumen, tabla y cambios de estado.
 export const AdminRooms: React.FC = () => {
-  // Datos y acciones de habitaciones compartidas por DataContext.
-  const { rooms, addRoom, updateRoomStatus, deleteRoom, cancelRoomOccupancy } = useData();
+  const { rooms, error, clearError, addRoom, updateRoomStatus, deleteRoom, cancelRoomOccupancy } = useData();
 
-  // Estados del formulario para crear una habitacion nueva.
   const [number, setNumber] = useState('');
   const [type, setType] = useState('Doble');
   const [statusNew, setStatusNew] = useState<'Disponible' | 'Mantenimiento'>('Disponible');
-  // Estados del modal para cancelar una ocupacion activa.
   const [cancelingRoomId, setCancelingRoomId] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Conteos que se ven en el resumen de habitaciones.
   const availableRooms = rooms.filter((r) => r.status === 'Disponible').length;
   const occupiedRooms = rooms.filter((r) => r.status === 'Ocupada').length;
   const maintenanceRooms = rooms.filter((r) => r.status === 'Mantenimiento').length;
 
-  // Devuelve la clase CSS del color del estado.
   const getStatusClass = (status: 'Disponible' | 'Ocupada' | 'Mantenimiento') => {
     if (status === 'Disponible') return 'status-pill status-disponible';
     if (status === 'Ocupada') return 'status-pill status-ocupada';
     return 'status-pill status-mantenimiento';
   };
 
-  // Cambia estados permitidos; ocupar requiere datos de huesped desde Dashboard.
-  const updateStatus = (id: number, nextStatus: 'Disponible' | 'Ocupada' | 'Mantenimiento') => {
-    if (nextStatus === 'Ocupada') {
-      alert('Para ocupar una habitacion, usa el dashboard y registra huesped y valor acordado.');
-      return;
-    }
-    updateRoomStatus(id, nextStatus);
+  const handleSetMaintenance = async (id: number) => {
+    if (submitting) return;
+    clearError();
+    setLocalError(null);
+    setSubmitting(true);
+    await updateRoomStatus(id, 'Mantenimiento', 'En mantenimiento');
+    setSubmitting(false);
   };
 
-  // Confirma cancelacion de entrada y libera la habitacion.
+  const handleSetAvailable = async (id: number, wasOccupied: boolean) => {
+    if (submitting) return;
+    if (wasOccupied && !confirm('¿Finalizar la estancia y pasar a Disponible? El ingreso se conservara en los informes.')) return;
+    clearError();
+    setLocalError(null);
+    setSubmitting(true);
+    await updateRoomStatus(id, 'Disponible', wasOccupied ? 'Estancia finalizada' : 'Disponible');
+    setSubmitting(false);
+  };
+
   const confirmCancelOccupancy = async () => {
-    if (cancelingRoomId === null) return;
+    if (cancelingRoomId === null || submitting) return;
     if (!cancelReason.trim()) {
-      alert('Escribe un motivo.');
+      setLocalError('Escribe un motivo para anular la entrada.');
       return;
     }
+    clearError();
+    setLocalError(null);
+    setSubmitting(true);
     const saved = await cancelRoomOccupancy(cancelingRoomId, cancelReason.trim());
+    setSubmitting(false);
     if (!saved) return;
     setCancelingRoomId(null);
     setCancelReason('');
   };
 
-  // Crea una habitacion despues de validar numero unico.
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    const roomNumber = number.trim();
-    if (!roomNumber || !type) return;
+    if (submitting) return;
+    clearError();
+    setLocalError(null);
 
-    if (rooms.some((r) => r.number === roomNumber)) {
-      alert('Ya existe una habitacion con ese numero. Elige otro numero.');
+    const roomNumber = number.trim();
+    if (!roomNumber || !type) {
+      setLocalError('El numero y tipo de habitacion son obligatorios.');
       return;
     }
 
-    const saved = await addRoom({ number: roomNumber, type, status: statusNew });
+    if (rooms.some((r) => r.number.toLowerCase() === roomNumber.toLowerCase())) {
+      setLocalError('Ya existe una habitacion con ese numero. Elige otro numero.');
+      return;
+    }
+
+    setSubmitting(true);
+    const saved = await addRoom({
+      number: roomNumber,
+      type,
+      status: statusNew,
+      note: statusNew === 'Mantenimiento' ? 'En mantenimiento' : undefined
+    });
+    setSubmitting(false);
     if (!saved) return;
     setNumber('');
     setType('Doble');
     setStatusNew('Disponible');
   };
 
-  // Elimina una habitacion despues de confirmacion.
   const handleDeleteRoom = async (id: number) => {
-    if (!confirm('Eliminar habitacion?')) return;
+    if (submitting) return;
+    if (!confirm('¿Eliminar habitacion?')) return;
+    clearError();
+    setLocalError(null);
+    setSubmitting(true);
     await deleteRoom(id);
+    setSubmitting(false);
   };
+
+  const activeError = localError || error;
 
   return (
     <div className="admin-page">
       <div className="page-header">
         <h2>Habitaciones</h2>
-        <p>Revisa disponibilidad, actualiza estados y administra habitaciones.</p>
+        <p>Revisa disponibilidad, actualiza estados y administra habitaciones en SQL Server. Para ocupar una habitacion con huesped, usa el Dashboard.</p>
       </div>
+
+      {activeError ? <div className="feedback-banner feedback-error">{activeError}</div> : null}
 
       <div className="admin-grid">
         <div className="admin-card form-section">
@@ -88,7 +118,7 @@ export const AdminRooms: React.FC = () => {
           <form onSubmit={handleAddRoom} className="admin-form form-grid">
             <label>
               Numero
-              <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="101" />
+              <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Ej. 101" maxLength={20} />
             </label>
             <label>
               Tipo
@@ -105,8 +135,8 @@ export const AdminRooms: React.FC = () => {
                 <option value="Mantenimiento">Mantenimiento</option>
               </select>
             </label>
-            <button type="submit" className="admin-action-btn" style={{ gridColumn: '1 / -1' }}>
-              Agregar Habitacion
+            <button type="submit" disabled={submitting} className="admin-action-btn" style={{ gridColumn: '1 / -1' }}>
+              {submitting ? 'Guardando...' : 'Agregar Habitacion'}
             </button>
           </form>
         </div>
@@ -129,6 +159,7 @@ export const AdminRooms: React.FC = () => {
                 <th>Numero</th>
                 <th>Tipo</th>
                 <th>Estado</th>
+                <th>Nota</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -140,28 +171,64 @@ export const AdminRooms: React.FC = () => {
                   <td>
                     <span className={getStatusClass(room.status)}>{room.status}</span>
                   </td>
+                  <td>{room.note || '-'}</td>
                   <td className="table-actions">
                     {room.status === 'Ocupada' ? (
-                      <button onClick={() => { setCancelingRoomId(room.id); setCancelReason(''); }} className="table-btn" style={{ background: '#ef4444', color: 'white' }}>
-                        Cancelar
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          disabled={submitting}
+                          onClick={() => handleSetAvailable(room.id, true)}
+                          className="table-btn btn-success"
+                        >
+                          Finalizar
+                        </button>
+                        <button
+                          type="button"
+                          disabled={submitting}
+                          onClick={() => {
+                            setCancelingRoomId(room.id);
+                            setCancelReason('');
+                            setLocalError(null);
+                          }}
+                          className="table-btn btn-danger"
+                        >
+                          Anular
+                        </button>
+                      </>
                     ) : (
-                      <button onClick={() => updateStatus(room.id, 'Disponible')} className="table-btn">
+                      <button
+                        type="button"
+                        disabled={submitting || room.status === 'Disponible'}
+                        onClick={() => handleSetAvailable(room.id, false)}
+                        className="table-btn"
+                      >
                         Disponible
                       </button>
                     )}
-                    <button onClick={() => updateStatus(room.id, 'Ocupada')} className="table-btn">
-                      Ocupada
-                    </button>
-                    <button onClick={() => updateStatus(room.id, 'Mantenimiento')} className="table-btn">
+                    <button
+                      type="button"
+                      disabled={submitting || room.status === 'Mantenimiento'}
+                      onClick={() => handleSetMaintenance(room.id)}
+                      className="table-btn btn-warning"
+                    >
                       Mant.
                     </button>
-                    <button onClick={() => handleDeleteRoom(room.id)} className="table-btn" style={{ marginLeft: 8, background: '#ef4444', color: 'white' }}>
+                    <button
+                      type="button"
+                      disabled={submitting || room.status === 'Ocupada'}
+                      onClick={() => handleDeleteRoom(room.id)}
+                      className="table-btn btn-danger"
+                      title={room.status === 'Ocupada' ? 'Libera la habitacion antes de eliminarla' : 'Eliminar habitacion'}
+                    >
                       Eliminar
                     </button>
                   </td>
                 </tr>
               ))}
+              {!rooms.length ? (
+                <tr><td colSpan={5}>No hay habitaciones registradas.</td></tr>
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -171,13 +238,20 @@ export const AdminRooms: React.FC = () => {
         <div className="dashboard-modal-overlay" onClick={() => setCancelingRoomId(null)}>
           <div className="dashboard-modal reservation-alert-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
-              <h3>Cancelar entrada</h3>
-              <button className="modal-close" onClick={() => setCancelingRoomId(null)}>x</button>
+              <h3>Anular entrada</h3>
+              <button type="button" className="modal-close" onClick={() => setCancelingRoomId(null)}>×</button>
             </div>
             <div className="modal-body">
-              <p>Escribe el motivo para volver la habitacion a Disponible y mover el valor a entradas canceladas.</p>
-              <textarea value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Motivo obligatorio" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' }} />
-              <button className="admin-action-btn" onClick={confirmCancelOccupancy}>Confirmar cancelacion</button>
+              <p>Escribe el motivo para volver la habitacion a Disponible y pasar el valor a entradas canceladas.</p>
+              <textarea
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+                placeholder="Motivo obligatorio"
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', minHeight: 90 }}
+              />
+              <button type="button" disabled={submitting} className="admin-action-btn" onClick={confirmCancelOccupancy}>
+                {submitting ? 'Guardando...' : 'Confirmar anulacion'}
+              </button>
             </div>
           </div>
         </div>

@@ -1,6 +1,5 @@
 /* Estilos compartidos de toda la aplicacion.
    Se ven en pantallas admin y trabajador: tarjetas, tablas, botones, modales, reportes y dashboard. */
-/* Reset visual: elimina margenes/paddings por defecto y hace sizing predecible. */
 * {
   margin: 0;
   padding: 0;
@@ -10,10 +9,9 @@
 html,
 body {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
 }
 
-/* Base del documento: tipografia, fondo y color principal. */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -41,6 +39,12 @@ textarea {
   font: inherit;
 }
 
+input,
+select,
+textarea {
+  color: #0f172a;
+}
+
 /* Contenedores principales de paginas admin/trabajador/dashboard. */
 .admin-page,
 .worker-page,
@@ -58,6 +62,14 @@ textarea {
   gap: 8px;
 }
 
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .page-header h2 {
   font-size: 28px;
   color: #0f172a;
@@ -68,6 +80,23 @@ textarea {
   max-width: 720px;
 }
 
+.date-filter-field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.date-filter-field input,
+.date-filter-field select {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: white;
+  color: #0f172a;
+}
+
 /* Grillas responsivas usadas para formularios, reportes y tarjetas. */
 .admin-grid,
 .report-grid {
@@ -76,11 +105,9 @@ textarea {
   gap: 18px;
 }
 
-/* Tarjetas blancas compartidas en formularios, tablas, tareas y habitaciones. */
+/* Tarjetas blancas compartidas en formularios, tablas y habitaciones. */
 .admin-card,
 .stat-card,
-.task-item,
-.message-item,
 .room-card {
   background: white;
   border-radius: 18px;
@@ -89,9 +116,7 @@ textarea {
 }
 
 .admin-card h3,
-.stat-card h3,
-.task-item h3,
-.message-item strong {
+.stat-card h3 {
   margin: 0 0 14px 0;
 }
 
@@ -116,6 +141,7 @@ textarea {
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: #f8fafc;
+  color: #0f172a;
 }
 
 .admin-form textarea {
@@ -123,19 +149,28 @@ textarea {
   resize: vertical;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.form-section {
+  display: grid;
+  gap: 18px;
+}
+
 /* Botones principales y secundarios reutilizados en tablas y acciones. */
 .admin-action-btn,
 .table-btn,
-.task-btn,
 .action-btn {
   border: none;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
 }
 
-/* Botones principales y secundarios reutilizados en tablas y acciones. */
 .admin-action-btn,
 .action-btn {
   background: #4f46e5;
@@ -143,12 +178,35 @@ textarea {
   padding: 12px 16px;
 }
 
-.admin-action-btn:hover,
-.action-btn:hover,
-.table-btn:hover,
-.task-btn:hover {
+.admin-action-btn:hover:not(:disabled),
+.action-btn:hover:not(:disabled),
+.table-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(79, 70, 229, 0.18);
+}
+
+.admin-action-btn:disabled,
+.table-btn:disabled,
+.action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-success {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-warning {
+  background: #d97706;
+  color: white;
 }
 
 /* Wrapper que permite scroll horizontal en tablas pequenas. */
@@ -182,135 +240,106 @@ th {
   font-size: 13px;
 }
 
-/* Tarjetas de tareas del trabajador. */
-.task-item {
+.table-actions {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.task-item.task-completed {
-  opacity: 0.75;
-  background: #ecfdf5;
-}
-
-.task-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
   flex-wrap: wrap;
-}
-
-.task-info h3 {
-  margin-bottom: 8px;
-}
-
-.task-badge {
-  display: inline-flex;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  font-size: 12px;
-  color: #334155;
-}
-
-.task-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-/* Tarjetas de mensajes del trabajador. */
-.message-item {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.message-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
-.message-item p {
-  color: #475569;
-  line-height: 1.65;
-}
-
-.messages-list {
-  display: grid;
-  gap: 14px;
-}
-
-.admin-actions-bar {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.form-section {
-  display: grid;
-  gap: 18px;
-}
-
-/* Contenido interno de modales con scroll cuando hay muchas filas. */
-.modal-content {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.modal-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.modal-list li {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+/* Avisos inline dentro de formularios y pantallas. */
+.feedback-banner {
   padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.feedback-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.feedback-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.feedback-info {
+  background: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #a5b4fc;
+}
+
+/* Preferencias del sistema (AdminSettings). */
+.settings-card {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.setting-row strong {
+  display: block;
   color: #0f172a;
+  margin-bottom: 4px;
 }
 
-.modal-empty {
-  color: #64748b;
+.setting-row p {
+  color: #475569;
+  font-size: 14px;
 }
 
-/* Etiquetas de estado visibles en habitaciones. */
+.setting-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #4f46e5;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* Etiquetas de estado visibles en habitaciones y reservaciones. */
 .status-pill {
   display: inline-flex;
-  padding: 6px 10px;
+  align-items: center;
+  padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
   color: white;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.status-disponible {
+.status-disponible,
+.status-confirmada {
   background: #22c55e;
 }
 
-.status-ocupada {
+.status-ocupada,
+.status-cancelada {
   background: #ef4444;
 }
 
-.status-mantenimiento {
+.status-mantenimiento,
+.status-pendiente {
   background: #f59e0b;
+}
+
+.status-atrasada {
+  background: #dc2626;
 }
 
 /* Fondo oscuro fijo usado por todos los modales. */
@@ -328,8 +357,8 @@ th {
 .dashboard-modal {
   background: white;
   border-radius: 24px;
-  width: min(680px, 100%);
-  max-height: 80vh;
+  width: min(720px, 100%);
+  max-height: 85vh;
   overflow: hidden;
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.3);
   display: flex;
@@ -340,7 +369,8 @@ th {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 0 24px;
+  padding: 22px 24px 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-header h3 {
@@ -357,7 +387,8 @@ th {
   height: 36px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -367,25 +398,47 @@ th {
   background: #cbd5e1;
 }
 
-.modal-/* Base del documento: tipografia, fondo y color principal. */
-body {
-  padding: 0 24px 24px 24px;
+.modal-content,
+.modal-body {
+  padding: 20px 24px 24px 24px;
+  max-height: 68vh;
+  overflow-y: auto;
+}
+
+.modal-body {
+  display: grid;
+  gap: 16px;
+  color: #334155;
+  line-height: 1.5;
 }
 
 .reservation-alert-modal {
-  width: min(420px, 100%);
-}
-
-.reservation-alert-modal .modal-/* Base del documento: tipografia, fondo y color principal. */
-body {
-  display: grid;
-  gap: 18px;
-  color: #334155;
-  line-height: 1.6;
+  width: min(440px, 100%);
 }
 
 .reservation-alert-modal .admin-action-btn {
   justify-self: end;
+}
+
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.modal-list li {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #0f172a;
+}
+
+.modal-empty {
+  color: #64748b;
+  padding: 14px 0;
 }
 
 /* Boton y modal del calendario de reservas. */
@@ -396,12 +449,6 @@ body {
 
 .reservations-calendar-modal {
   width: min(760px, 100%);
-}
-
-.reservations-calendar-modal .modal-/* Base del documento: tipografia, fondo y color principal. */
-body {
-  display: grid;
-  gap: 18px;
 }
 
 .calendar-room-field {
@@ -540,43 +587,19 @@ body {
   border: 1px solid #fca5a5;
 }
 
-.modal-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 12px;
-}
-
-.modal-list li {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px 16px;
-  color: #0f172a;
-}
-
-.modal-empty {
-  color: #64748b;
-  padding: 14px 0;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.form-section {
-  display: grid;
-  gap: 18px;
-}
-
 /* Resumenes de habitaciones, reservas e informes. */
 .summary-card p {
   margin: 12px 0 0 0;
   color: #475569;
   font-size: 14px;
+}
+
+.admin-actions-bar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
 .admin-actions-bar label {
@@ -608,6 +631,8 @@ body {
   list-style: disc;
   margin-left: 20px;
   color: #475569;
+  display: grid;
+  gap: 8px;
 }
 
 .saved-message {
@@ -655,20 +680,24 @@ body {
   gap: 16px;
 }
 
+.audit-json {
+  max-width: 280px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Ajustes responsive para pantallas pequenas. */
 @media (max-width: 768px) {
   .dashboard-welcome,
-  /* Tarjetas blancas compartidas en formularios, tablas, tareas y habitaciones. */
-.admin-card,
-  .stat-card,
-  .task-item,
-  /* Tarjetas de mensajes del trabajador. */
-.message-item {
+  .admin-card,
+  .stat-card {
     padding: 20px;
   }
 
-  /* Grillas responsivas usadas para formularios, reportes y tarjetas. */
-.admin-grid,
+  .admin-grid,
   .report-grid,
   .actions-grid {
     grid-template-columns: 1fr;

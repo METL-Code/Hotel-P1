@@ -1,170 +1,70 @@
-# 🏨 Hotel Management System - Login
+# Hotel Management System
 
-Sistema de gestión hotelera con autenticación de roles (Administrador y Trabajador) construido con React, TypeScript y Vite.
+Sistema de gestion hotelera con autenticacion por roles (**Administrador** y **Usuario / Trabajador**) conectado a **SQL Server** mediante una API REST en Node.js y un frontend en React, TypeScript y Vite.
 
-## 📋 Características
+## Stack Tecnologico
 
-- ✅ **Autenticación de dos roles**:
-  - **Administrador**: Acceso completo al sistema
-  - **Trabajador**: Acceso limitado a tareas y asignaciones
-  
-- 🎨 **Interfaz moderna y responsiva** con diseño profesional
-- 🔐 **Rutas protegidas** que requieren autenticación
-- 📱 **Diseño mobile-friendly** que se adapta a cualquier pantalla
-- 🎯 **Dashboards personalizados** según el rol del usuario
+- **Frontend:** React 18, TypeScript, Vite, React Router 6
+- **Backend:** Node.js (`http` nativo, autenticacion JWT HS256, hash de claves con `crypto.scrypt`)
+- **Base de datos:** SQL Server (`mssql/msnodesqlv8` en Windows o `mssql/tedious` para hosting Linux)
 
-## 🚀 Inicio Rápido
+## Configuracion Rapida
 
-### Requisitos
-- Node.js (versión 16 o superior)
-- npm o yarn
+1. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
+2. **Crear tablas iniciales en SQL Server:**
+   Ejecuta [`backend/schema.sql`](backend/schema.sql) en SQL Server Management Studio o `sqlcmd`.
+3. **Configurar variables de entorno:**
+   - Copia [`.env.example`](.env.example) a `.env`.
+   - Copia [`backend/.env.example`](backend/.env.example) a `backend/.env` y configura `DB_SERVER`, `DB_DATABASE`, `DB_USER`, `DB_PASSWORD` y `JWT_SECRET`.
 
-### Instalación
+## Ejecucion en Desarrollo
 
-1. **Clonar el repositorio**
+Abre dos terminales en la raiz del proyecto:
+
 ```bash
-cd c:\Proyecto_Personal\Hotel
-```
+# Terminal 1: Backend API (http://localhost:4000)
+npm run api
 
-2. **Instalar dependencias**
-```bash
-npm install
-```
-
-3. **Ejecutar en modo desarrollo**
-```bash
+# Terminal 2: Frontend Vite (http://localhost:3000)
 npm run dev
 ```
 
-La aplicación se abrirá automáticamente en `http://localhost:3000`
+## Build y Ejecucion en Produccion
 
-### Build para producción
 ```bash
 npm run build
+NODE_ENV=production npm run api
 ```
 
-### Preview de la build
-```bash
-npm run preview
-```
+Cuando existe `dist/`, el servidor backend tambien sirve los archivos estaticos del frontend en el mismo puerto (`http://localhost:4000`).
 
-## 🔐 Credenciales de Demo
+## Estructura del Proyecto
 
-### Administrador
-- **Usuario**: usuario
-- **Contraseña**: admin123
+```txt
+backend/
+├── schema.sql            # Esquema de tablas y datos iniciales en SQL Server
+└── server.js             # Servidor HTTP, autenticacion JWT, transacciones y auditoria
 
-### Trabajador
-- **Usuario**: usuario
-- **Contraseña**: trabajador123
-
-## 📁 Estructura del Proyecto
-
-```
 src/
-├── components/
-│   └── ProtectedRoute.tsx      # Componente de rutas protegidas
-├── context/
-│   └── AuthContext.tsx         # Contexto de autenticación
+├── components/           # Rutas protegidas (ProtectedRoute)
+├── context/              # AuthContext (sesion JWT) y DataContext (datos SQL Server)
 ├── pages/
-│   ├── LoginPage.tsx           # Página de login
-│   ├── LoginPage.css
-│   ├── AdminDashboard.tsx      # Dashboard de administrador
-│   ├── AdminDashboard.css
-│   ├── WorkerDashboard.tsx     # Dashboard de trabajador
-│   └── WorkerDashboard.css
-├── App.tsx                      # Componente principal
-├── App.css
-├── main.tsx                     # Punto de entrada
-└── index.css
+│   ├── LoginPage.tsx     # Inicio de sesion por rol
+│   ├── AdminDashboard.tsx
+│   ├── admin/            # Habitaciones, Usuarios, Reservaciones, Informes, Auditoria, Configuracion
+│   └── worker/           # Layout del panel operativo
+├── services/api.ts       # Cliente HTTP centralizado con Bearer token y manejo 401
+└── utils/format.ts       # Utilidades de fecha y formato de moneda
 ```
 
-## 🎯 Funcionalidades
+## Funcionalidades Principales
 
-### 🔑 Página de Login
-- Seleccionar rol (Administrador o Trabajador)
-- Autenticación con usuario y contraseña
-- Validación de credenciales
-- Mensajes de error personalizados
-
-### 👨‍💼 Dashboard Administrador
-- Vista general de estadísticas
-- Gestión de usuarios
-- Gestión de habitaciones
-- Control de reservaciones
-- Reportes del sistema
-- Acceso a configuración
-
-### 👨‍💻 Dashboard Trabajador
-- Tareas asignadas
-- Habitaciones asignadas
-- Seguimiento de tareas completadas
-- Registro de horas trabajadas
-- Opción de reportar problemas
-- Contacto con supervisor
-
-## 🔄 Flujo de Autenticación
-
-1. Usuario ingresa a la aplicación
-2. Selecciona su rol (Admin o Trabajador)
-3. Introduce sus credenciales
-4. El sistema valida las credenciales
-5. Si es correcto, se redirige al dashboard correspondiente
-6. Las rutas están protegidas y requieren autenticación
-
-## 🛠️ Tecnologías Utilizadas
-
-- **React 18.2** - Librería UI
-- **TypeScript** - Tipado estático
-- **Vite 5.0** - Build tool
-- **React Router 6.20** - Enrutamiento
-- **CSS3** - Estilos modernos
-
-## 🔄 Próximas Características
-
-- [ ] Integración con SQL Server
-- [ ] Sistema de permisos granulares
-- [ ] Recuperación de contraseña
-- [ ] Autenticación con token JWT
-- [ ] Historial de actividades
-- [ ] Notificaciones en tiempo real
-- [ ] Temas personalizables
-
-## 📝 Notas Importantes
-
-### Autenticación Demo
-Este proyecto usa una autenticación simulada en el contexto. Para producción, necesitarás:
-
-1. **Backend API** con autenticación real
-2. **Base de datos SQL Server** con tabla de usuarios
-3. **Tokens JWT** para mantener la sesión
-4. **HTTPS** en producción
-5. **Hash de contraseñas** con bcrypt o similar
-
-### Ejemplo de integración con backend:
-```typescript
-// En AuthContext.tsx - login function
-const response = await fetch('https://tu-api.com/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username, password, role })
-});
-
-const data = await response.json();
-if (data.token) {
-  localStorage.setItem('token', data.token);
-  setUser(data.user);
-}
-```
-
-## 📞 Soporte
-
-Para reportar problemas o sugerencias, por favor abre un issue en el repositorio.
-
-## 📄 Licencia
-
-Este proyecto está disponible bajo la licencia MIT.
-
----
-
-**Desarrollado con ❤️ para Hotel Management System**
+- **Autenticacion segura:** Tokens JWT firmados, hashing de claves con `scrypt`, bloqueo temporal por fuerza bruta y control de rol en el servidor.
+- **Habitaciones:** Alta, estados (`Disponible`, `Ocupada`, `Mantenimiento`), notas operativas, finalizar estancia, anular entrada y borrado logico.
+- **Huespedes y Ocupaciones:** Busqueda por cedula, registro transaccional de entrada y cambio atomico de estado.
+- **Reservaciones:** Validacion de fechas y cruces por habitacion, calendario mensual interactivo, confirmacion de llegada y cancelacion con motivo.
+- **Informes y Auditoria:** Informes diarios y mensuales filtrables por fecha/mes, indicadores en tiempo real y tabla de auditoria (`dbo.Auditoria`).
+- **Configuracion Global:** Preferencias persistidas en `dbo.Configuracion`.

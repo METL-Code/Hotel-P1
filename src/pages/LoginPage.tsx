@@ -1,25 +1,25 @@
 // Pantalla de inicio de sesion.
 // Se ve en / y permite escoger rol, escribir credenciales y entrar al panel correcto.
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
-// Componente que pinta el login completo.
 export const LoginPage: React.FC = () => {
-  // Rol elegido; controla si se ve seleccion de rol o formulario.
   const [selectedRole, setSelectedRole] = useState<'admin' | 'trabajador' | null>(null);
-  // Campos y estados visibles del formulario de login.
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Funcion login viene de AuthContext y decide API/local.
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  // Al elegir rol, limpia formulario y muestra campos de usuario/clave.
+  // Si ya hay sesion activa, redirige automaticamente al panel correspondiente.
+  if (isAuthenticated && user) {
+    return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/trabajador/dashboard'} replace />;
+  }
+
   const handleRoleSelect = (role: 'admin' | 'trabajador') => {
     setSelectedRole(role);
     setError('');
@@ -27,12 +27,6 @@ export const LoginPage: React.FC = () => {
     setPassword('');
   };
 
-  // Redirige al dashboard correcto segun rol autenticado.
-  const goToPanel = (role: 'admin' | 'trabajador') => {
-    navigate(role === 'admin' ? '/admin/dashboard' : '/trabajador/dashboard');
-  };
-
-  // Envia credenciales, muestra loading y errores si falla.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -44,7 +38,7 @@ export const LoginPage: React.FC = () => {
       }
 
       await login(username, password, selectedRole);
-      goToPanel(selectedRole);
+      navigate(selectedRole === 'admin' ? '/admin/dashboard' : '/trabajador/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesion');
     } finally {
@@ -57,12 +51,12 @@ export const LoginPage: React.FC = () => {
       <div className="login-box">
         <h1 className="hotel-title">Hotel Management</h1>
 
-        {/* Si no hay rol seleccionado, se muestran los dos botones de acceso. */}
         {!selectedRole ? (
           <div className="role-selection">
             <h2>Selecciona tu rol de acceso</h2>
             <div className="role-buttons">
               <button
+                type="button"
                 className="role-btn admin-btn"
                 onClick={() => handleRoleSelect('admin')}
               >
@@ -71,6 +65,7 @@ export const LoginPage: React.FC = () => {
                 <span className="role-description">Acceso completo al sistema</span>
               </button>
               <button
+                type="button"
                 className="role-btn worker-btn"
                 onClick={() => handleRoleSelect('trabajador')}
               >
@@ -81,7 +76,6 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          /* Si ya hay rol, se muestra el formulario de usuario y contrasena. */
           <form onSubmit={handleSubmit} className="login-form">
             <div className="role-badge">
               <button
@@ -101,6 +95,7 @@ export const LoginPage: React.FC = () => {
               <input
                 id="username"
                 type="text"
+                autoComplete="username"
                 placeholder={selectedRole === 'admin' ? 'Usuario administrador' : 'Tu usuario'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -113,7 +108,8 @@ export const LoginPage: React.FC = () => {
               <input
                 id="password"
                 type="password"
-                placeholder={selectedRole === 'admin' ? 'admin123' : 'trabajador123'}
+                autoComplete="current-password"
+                placeholder="Ingresa tu contrasena"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -129,7 +125,6 @@ export const LoginPage: React.FC = () => {
             >
               {loading ? 'Iniciando sesion...' : 'Iniciar Sesion'}
             </button>
-
           </form>
         )}
       </div>

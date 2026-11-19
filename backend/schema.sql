@@ -18,23 +18,23 @@ USE [$(DatabaseName)];
 GO
 
 -- Crea la tabla de usuarios solo si todavia no existe.
--- Esta tabla es la que usa backend/server.js para el login y el CRUD de usuarios.
+-- Las claves nuevas se almacenan con hash scrypt; las antiguas en texto plano se migran al primer login.
 IF OBJECT_ID('dbo.Usuarios', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Usuarios (
-        Id INT IDENTITY(1,1) PRIMARY KEY, -- Identificador automatico de cada usuario.
-        Nombres NVARCHAR(100) NOT NULL, -- Nombres reales visibles en la lista de usuarios.
-        Apellidos NVARCHAR(100) NOT NULL, -- Apellidos reales visibles en la lista de usuarios.
-        Username NVARCHAR(100) NOT NULL UNIQUE, -- Usuario usado para iniciar sesion.
-        Email NVARCHAR(150) NOT NULL UNIQUE, -- Correo mostrado en paneles y tabla de usuarios.
-        Password NVARCHAR(255) NOT NULL, -- Clave actual en texto plano; solo apto para pruebas locales.
-        Role NVARCHAR(20) NOT NULL CHECK (Role IN ('admin', 'trabajador')), -- Define acceso a /admin o /trabajador.
-        Status NVARCHAR(20) NOT NULL DEFAULT 'Activo' CHECK (Status IN ('Activo', 'Inactivo')), -- Permite bloquear usuarios.
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de creacion del registro.
-        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de ultima actualizacion.
-        IsDeleted BIT NOT NULL DEFAULT 0, -- Borrado logico para no perder trazabilidad.
-        DeletedAt DATETIME2 NULL, -- Fecha de eliminacion logica.
-        DeletedBy NVARCHAR(100) NULL -- Usuario que elimino el registro.
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Nombres NVARCHAR(100) NOT NULL,
+        Apellidos NVARCHAR(100) NOT NULL,
+        Username NVARCHAR(100) NOT NULL UNIQUE,
+        Email NVARCHAR(150) NOT NULL UNIQUE,
+        Password NVARCHAR(255) NOT NULL,
+        Role NVARCHAR(20) NOT NULL CHECK (Role IN ('admin', 'trabajador')),
+        Status NVARCHAR(20) NOT NULL DEFAULT 'Activo' CHECK (Status IN ('Activo', 'Inactivo')),
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        IsDeleted BIT NOT NULL DEFAULT 0,
+        DeletedAt DATETIME2 NULL,
+        DeletedBy NVARCHAR(100) NULL
     );
 END;
 GO
@@ -57,105 +57,128 @@ END;
 GO
 
 -- Crea la tabla de habitaciones.
--- Esta tabla reemplaza el localStorage para las habitaciones visibles en Dashboard y Habitaciones.
 IF OBJECT_ID('dbo.Habitaciones', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Habitaciones (
-        Id INT IDENTITY(1,1) PRIMARY KEY, -- Identificador automatico de la habitacion.
-        Numero NVARCHAR(20) NOT NULL UNIQUE, -- Numero visible de habitacion, por ejemplo 101.
-        Tipo NVARCHAR(50) NOT NULL, -- Tipo visible: Individual, Doble, Suite, etc.
-        Estado NVARCHAR(30) NOT NULL CHECK (Estado IN ('Disponible', 'Ocupada', 'Mantenimiento')), -- Estado visible en tarjetas y tablas.
-        Nota NVARCHAR(500) NULL, -- Nota operativa visible en modales del dashboard.
-        IsDeleted BIT NOT NULL DEFAULT 0, -- Borrado logico: 0 visible, 1 eliminado.
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de creacion.
-        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de ultima actualizacion.
-        DeletedAt DATETIME2 NULL, -- Fecha de eliminacion logica.
-        DeletedBy NVARCHAR(100) NULL -- Usuario que elimino la habitacion.
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Numero NVARCHAR(20) NOT NULL UNIQUE,
+        Tipo NVARCHAR(50) NOT NULL,
+        Estado NVARCHAR(30) NOT NULL CHECK (Estado IN ('Disponible', 'Ocupada', 'Mantenimiento')),
+        Nota NVARCHAR(500) NULL,
+        IsDeleted BIT NOT NULL DEFAULT 0,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        DeletedAt DATETIME2 NULL,
+        DeletedBy NVARCHAR(100) NULL
     );
 END;
 GO
 
 -- Crea la tabla de huespedes.
--- Se usa al ocupar habitaciones y para buscar por cedula desde el Dashboard.
 IF OBJECT_ID('dbo.Huespedes', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Huespedes (
-        Id INT IDENTITY(1,1) PRIMARY KEY, -- Identificador automatico del huesped.
-        Cedula NVARCHAR(50) NOT NULL UNIQUE, -- Documento usado para buscar y reutilizar datos.
-        Nombres NVARCHAR(100) NOT NULL, -- Nombres del huesped.
-        Apellidos NVARCHAR(100) NOT NULL, -- Apellidos del huesped.
-        Email NVARCHAR(150) NULL, -- Correo opcional del huesped.
-        IsDeleted BIT NOT NULL DEFAULT 0, -- Borrado logico si mas adelante se elimina un huesped.
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de creacion.
-        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de ultima actualizacion.
-        DeletedAt DATETIME2 NULL, -- Fecha de eliminacion logica.
-        DeletedBy NVARCHAR(100) NULL -- Usuario que elimino el huesped.
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Cedula NVARCHAR(50) NOT NULL UNIQUE,
+        Nombres NVARCHAR(100) NOT NULL,
+        Apellidos NVARCHAR(100) NOT NULL,
+        Email NVARCHAR(150) NULL,
+        IsDeleted BIT NOT NULL DEFAULT 0,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        DeletedAt DATETIME2 NULL,
+        DeletedBy NVARCHAR(100) NULL
     );
 END;
 GO
 
 -- Crea la tabla de reservaciones.
--- Alimenta la pantalla Reservaciones y las tarjetas de reservas del Dashboard.
 IF OBJECT_ID('dbo.Reservaciones', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Reservaciones (
-        Id INT IDENTITY(1,1) PRIMARY KEY, -- Identificador automatico de la reserva.
-        GuestName NVARCHAR(200) NOT NULL, -- Nombre visible del huesped en la reserva.
-        RoomNumber NVARCHAR(20) NOT NULL, -- Numero de habitacion reservado.
-        Price DECIMAL(12,2) NULL, -- Valor acordado de la reserva.
-        ClientType NVARCHAR(30) NULL CHECK (ClientType IS NULL OR ClientType IN ('Persona comun', 'Persona recurrente')), -- Tipo de cliente.
-        Status NVARCHAR(20) NOT NULL CHECK (Status IN ('Confirmada', 'Pendiente', 'Cancelada')), -- Estado visible de la reserva.
-        CheckinDate DATE NOT NULL, -- Fecha de entrada.
-        CheckoutDate DATE NOT NULL, -- Fecha de salida.
-        CancellationReason NVARCHAR(500) NULL, -- Motivo si se cancela.
-        IsDeleted BIT NOT NULL DEFAULT 0, -- Borrado/procesado logico para conservar auditoria.
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de creacion.
-        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha de ultima actualizacion.
-        DeletedAt DATETIME2 NULL, -- Fecha de eliminacion/procesamiento logico.
-        DeletedBy NVARCHAR(100) NULL -- Usuario que elimino/proceso la reserva.
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        GuestName NVARCHAR(200) NOT NULL,
+        RoomNumber NVARCHAR(20) NOT NULL,
+        Price DECIMAL(12,2) NULL,
+        ClientType NVARCHAR(30) NULL CHECK (ClientType IS NULL OR ClientType IN ('Persona comun', 'Persona recurrente')),
+        Status NVARCHAR(20) NOT NULL CHECK (Status IN ('Confirmada', 'Pendiente', 'Cancelada')),
+        CheckinDate DATE NOT NULL,
+        CheckoutDate DATE NOT NULL,
+        CancellationReason NVARCHAR(500) NULL,
+        IsDeleted BIT NOT NULL DEFAULT 0,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        DeletedAt DATETIME2 NULL,
+        DeletedBy NVARCHAR(100) NULL,
+        ProcessedAt DATETIME2 NULL
     );
 END;
 GO
 
+-- Agrega columna ProcessedAt si la tabla venia de una version anterior.
+IF COL_LENGTH('dbo.Reservaciones', 'ProcessedAt') IS NULL
+BEGIN
+    ALTER TABLE dbo.Reservaciones ADD ProcessedAt DATETIME2 NULL;
+END;
+GO
+
 -- Crea la tabla de entradas/ocupaciones.
--- Alimenta informes diarios y mensuales para admin y trabajador.
 IF OBJECT_ID('dbo.EntradasOcupacion', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.EntradasOcupacion (
-        Id INT IDENTITY(1,1) PRIMARY KEY, -- Identificador automatico de la entrada.
-        RoomId INT NULL, -- Id de habitacion si existe en dbo.Habitaciones.
-        RoomNumber NVARCHAR(20) NOT NULL, -- Numero de habitacion visible en informes.
-        GuestId INT NULL, -- Id de huesped si se registro por cedula.
-        GuestName NVARCHAR(200) NOT NULL, -- Nombre visible del huesped.
-        Price DECIMAL(12,2) NOT NULL, -- Valor usado para informes.
-        ClientType NVARCHAR(30) NOT NULL CHECK (ClientType IN ('Persona comun', 'Persona recurrente')), -- Tipo de cliente.
-        EntryDate DATE NOT NULL DEFAULT CONVERT(date, SYSDATETIME()), -- Dia en que se ocupa la habitacion.
-        Status NVARCHAR(20) NOT NULL CHECK (Status IN ('Activa', 'Cancelada')), -- Estado de la entrada.
-        CancellationReason NVARCHAR(500) NULL, -- Motivo si se cancela la entrada.
-        CanceledAt DATE NULL, -- Dia en que se cancelo.
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(), -- Fecha exacta de creacion.
-        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME() -- Fecha exacta de ultima actualizacion.
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        RoomId INT NULL,
+        RoomNumber NVARCHAR(20) NOT NULL,
+        GuestId INT NULL,
+        GuestName NVARCHAR(200) NOT NULL,
+        Price DECIMAL(12,2) NOT NULL,
+        ClientType NVARCHAR(30) NOT NULL CHECK (ClientType IN ('Persona comun', 'Persona recurrente')),
+        EntryDate DATE NOT NULL DEFAULT CONVERT(date, SYSDATETIME()),
+        Status NVARCHAR(20) NOT NULL CHECK (Status IN ('Activa', 'Cancelada')),
+        CancellationReason NVARCHAR(500) NULL,
+        CanceledAt DATE NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
     );
 END;
 GO
 
 -- Crea la tabla de auditoria general.
--- Aqui se registran creaciones, cambios de estado, actualizaciones y eliminaciones logicas.
 IF OBJECT_ID('dbo.Auditoria', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Auditoria (
-        Id INT IDENTITY(1,1) PRIMARY KEY, -- Identificador automatico de auditoria.
-        Tabla NVARCHAR(100) NOT NULL, -- Tabla afectada, por ejemplo Habitaciones.
-        RegistroId INT NULL, -- Id del registro afectado.
-        Accion NVARCHAR(50) NOT NULL, -- CREATE, UPDATE, STATUS_CHANGE, DELETE, etc.
-        UsuarioId NVARCHAR(50) NULL, -- Id del usuario enviado por el frontend.
-        UsuarioNombre NVARCHAR(150) NULL, -- Nombre del usuario enviado por el frontend.
-        DatosAnteriores NVARCHAR(MAX) NULL, -- JSON con el estado anterior.
-        DatosNuevos NVARCHAR(MAX) NULL, -- JSON con el estado nuevo.
-        Motivo NVARCHAR(500) NULL, -- Motivo opcional de la accion.
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME() -- Fecha exacta de la auditoria.
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Tabla NVARCHAR(100) NOT NULL,
+        RegistroId INT NULL,
+        Accion NVARCHAR(50) NOT NULL,
+        UsuarioId NVARCHAR(50) NULL,
+        UsuarioNombre NVARCHAR(150) NULL,
+        DatosAnteriores NVARCHAR(MAX) NULL,
+        DatosNuevos NVARCHAR(MAX) NULL,
+        Motivo NVARCHAR(500) NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
     );
 END;
+GO
+
+-- Crea la tabla de configuracion global del sistema.
+IF OBJECT_ID('dbo.Configuracion', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Configuracion (
+        Clave NVARCHAR(100) PRIMARY KEY,
+        Valor NVARCHAR(500) NOT NULL,
+        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        UpdatedBy NVARCHAR(100) NULL
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Configuracion WHERE Clave = 'notifications')
+    INSERT INTO dbo.Configuracion (Clave, Valor) VALUES ('notifications', 'true');
+IF NOT EXISTS (SELECT 1 FROM dbo.Configuracion WHERE Clave = 'maintenanceMode')
+    INSERT INTO dbo.Configuracion (Clave, Valor) VALUES ('maintenanceMode', 'false');
+IF NOT EXISTS (SELECT 1 FROM dbo.Configuracion WHERE Clave = 'alertLowStock')
+    INSERT INTO dbo.Configuracion (Clave, Valor) VALUES ('alertLowStock', 'true');
 GO
 
 -- Usuario administrador inicial para entrar al panel de administracion.
@@ -203,5 +226,6 @@ SELECT * FROM dbo.Habitaciones WHERE IsDeleted = 0;
 SELECT * FROM dbo.Huespedes WHERE IsDeleted = 0;
 SELECT * FROM dbo.Reservaciones WHERE IsDeleted = 0;
 SELECT * FROM dbo.EntradasOcupacion ORDER BY EntryDate DESC, Id DESC;
+SELECT * FROM dbo.Configuracion;
 SELECT TOP 20 * FROM dbo.Auditoria ORDER BY CreatedAt DESC;
 GO
